@@ -1,0 +1,341 @@
+{% extends "account/base_account.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+{% endblock %}
+
+{% block account_content %}
+<div class="ajio-orders">
+
+  <div class="orders-title">
+    <h1>My Orders</h1>
+    <p>Track your open orders &amp; view the summary of your past orders</p>
+  </div>
+
+  <div class="orders-period">
+    <span>Orders Period</span>
+    <select id="orderPeriod">
+      <option value="6" selected>Last 6 months</option>
+      <option value="12">Last 12 months</option>
+      <option value="all">All</option>
+    </select>
+  </div>
+
+  <div id="ordersWrap"></div>
+  <p id="ordersMsg" class="orders-msg"></p>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* =========================
+   AJIO-like rating tooltip text
+========================= */
+const AJIO_RATING_TEXT = {1:"Poor",2:"Fair",3:"Good",4:"Very Good",5:"Excellent"};
+
+/* =========================
+   INIT
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+  loadOrders();
+  document.getElementById("orderPeriod")?.addEventListener("change", loadOrders);
+
+  // click star (rating)
+  document.addEventListener("click", (e) => {
+    const star = e.target.closest(".ajio-star");
+    if (!star) return;
+
+    const box = star.closest(".ajio-rating");
+    if (!box) return;
+
+    const rating = parseInt(star.dataset.value, 10);
+    setRatingAndSubmit(box, rating);
+  });
+
+  // hover tooltip
+  document.addEventListener("mouseover", (e) => {
+    const star = e.target.closest(".ajio-star");
+    if (!star) return;
+
+    const box = star.closest(".ajio-rating");
+    if (!box) return;
+
+    const rating = parseInt(star.dataset.value, 10);
+    paintStars(box, rating);
+    showTooltip(box, AJIO_RATING_TEXT[rating]);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const star = e.target.closest(".ajio-star");
+    if (!star) return;
+
+    const box = star.closest(".ajio-rating");
+    if (!box) return;
+
+    const selected = parseInt(box.dataset.selected || "0", 10);
+    paintStars(box, selected);
+    if (!selected) hideTooltip(box);
+  });
+});
+
+/* =========================
+   LOAD ORDERS
+========================= */
+async function loadOrders(){
+  const token  = localStorage.getItem("access");
+  const msg    = document.getElementById("ordersMsg");
+  const wrap   = document.getElementById("ordersWrap");
+  const period = document.getElementById("orderPeriod")?.value || "6";
+
+  msg.textContent = "";
+  wrap.innerHTML  = "";
+
+  if(!token){
+    msg.textContent = "Please login to view your orders.";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/orders/my/", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json().catch(()=>[]);
+    if(!res.ok){
+      console.error(data);
+      msg.textContent = "Unable to load orders.";
+      return;
+    }
+
+    const orders = filterByPeriod(Array.isArray(data) ? data : [], period);
+
+    if(!orders.length){
+      msg.textContent = "No orders found.";
+      return;
+    }
+
+    wrap.innerHTML = orders.map(orderBlock).join("");
+
+    // make entire row clickable (AJIO-like)
+    wrap.querySelectorAll(".order-row").forEach(row => {
+      row.addEventListener("click", (e) => {
+        // if user clicked on rating stars, don't navigate
+        if (e.target.closest(".ajio-rating")) return;
+        const oid = row.dataset.orderId;
+        goToOrderDetail(oid);
+      });
+    });
+
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "Network error. Check console.";
+  }
+}
+
+/* =========================
+   FILTER BY PERIOD
+========================= */
+function filterByPeriod(orders, period) {
+  if (period === "all") return orders;
+
+  const months = parseInt(period, 10);
+  if (Number.isNaN(months)) return orders;
+
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - months);
+
+  return orders.filter(o => new Date(o.created_at) >= cutoff);
+}
+
+/* =========================
+   ORDER BLOCK UI
+========================= */
+function orderBlock(order){
+  // Prefer backend order_no if available
+  const orderNo = order.order_no || `FN${String(order.id).padStart(10,"0")}`;
+
+  const items = order.items || [];
+  const status = (order.status || "PENDING").toUpperCase();
+  const statusLabel = order.status_label || statusToLabel(status);
+
+  const isDelivered = status === "DELIVERED";
+
+  const rows = items.map(item => {
+    const img = item.product_image || "/static/images/no-image.png";
+
+    const ratingValue = Number(item.rating_value || 0);
+    const isRated = ratingValue > 0;
+
+    return `
+      <div class="order-row" data-order-id="${order.id}">
+        <div class="thumb">
+          <img src="${img}" alt="${item.product_name || ''}"
+               onerror="this.src='/static/images/no-image.png'">
+        </div>
+
+        <div class="row-mid">
+          <div class="status ${statusClass(status)}">${statusLabel}</div>
+          <div class="date">
+            ${status === "CANCELLED"
+              ? `Cancelled on ${formatDate(order.created_at)}`
+              : isDelivered
+                ? `Delivered on ${formatDate(order.created_at)}`
+                : `Ordered on ${formatDate(order.created_at)}`
+            }
+          </div>
+
+          ${renderRating(item.id, isDelivered, isRated, ratingValue)}
+        </div>
+
+        <div class="order-arrow" aria-hidden="true">›</div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="order-block">
+      <div class="order-id">Order ID : <b>${orderNo}</b></div>
+      <div class="order-card">
+        ${rows}
+      </div>
+    </div>
+  `;
+}
+
+/* =========================
+   NAVIGATION (AJIO arrow click)
+   Change URL to your order detail page route
+========================= */
+function goToOrderDetail(orderId){
+  // ✅ set your correct detail route here
+  // example: /my-account/order-details/<id>/
+  window.location.href = `/account/orders/${orderId}/`;
+}
+
+/* =========================
+   STATUS HELPERS
+========================= */
+function statusToLabel(st){
+  st = String(st||"").toUpperCase();
+  if(st==="CONFIRMED") return "Confirmed";
+  if(st==="PENDING") return "Pending";
+  if(st==="FAILED") return "Failed";
+  if(st==="SHIPPED") return "Shipped";
+  if(st==="DELIVERED") return "Delivered";
+  if(st==="CANCELLED") return "Cancelled";
+  return st;
+}
+
+function statusClass(st){
+  st = String(st||"").toUpperCase();
+  if(st==="CANCELLED") return "cancelled";
+  if(st==="DELIVERED") return "delivered";
+  if(st==="SHIPPED") return "shipped";
+  if(st==="FAILED") return "failed";
+  return "confirmed";
+}
+
+/* =========================
+   RATING UI
+========================= */
+function renderRating(orderItemId, isDelivered, isRated, ratingValue){
+  if (!isDelivered) return "";
+
+  if (isRated) {
+    return `
+      <div class="ajio-rated-done">
+        You Rated&nbsp;&nbsp;
+        <span class="ajio-stars-static">${"★".repeat(ratingValue)}${"☆".repeat(5-ratingValue)}</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="ajio-rating" data-order-item-id="${orderItemId}" data-selected="0">
+      <div class="ajio-rating-bar">
+        <div class="ajio-rating-label">Rate this Product</div>
+
+        <div class="ajio-stars-wrap">
+          ${[1,2,3,4,5].map(n => `<span class="ajio-star" data-value="${n}">☆</span>`).join("")}
+        </div>
+
+        <div class="ajio-tooltip" style="display:none;"></div>
+      </div>
+
+      <div class="ajio-rating-msg"></div>
+    </div>
+  `;
+}
+
+function paintStars(box, selected){
+  box.querySelectorAll(".ajio-star").forEach(star => {
+    const v = parseInt(star.dataset.value, 10);
+    star.textContent = v <= selected ? "★" : "☆";
+    star.classList.toggle("filled", v <= selected);
+  });
+}
+
+function showTooltip(box, text){
+  const tip = box.querySelector(".ajio-tooltip");
+  if (!tip) return;
+  tip.textContent = text;
+  tip.style.display = "inline-block";
+}
+
+function hideTooltip(box){
+  const tip = box.querySelector(".ajio-tooltip");
+  if (!tip) return;
+  tip.style.display = "none";
+}
+
+async function setRatingAndSubmit(box, rating){
+  box.dataset.selected = rating;
+  paintStars(box, rating);
+  showTooltip(box, AJIO_RATING_TEXT[rating]);
+
+  const msgEl = box.querySelector(".ajio-rating-msg");
+  if (msgEl) msgEl.textContent = "Saving...";
+
+  const token = localStorage.getItem("access");
+  const orderItemId = box.dataset.orderItemId;
+
+  try {
+    const res = await fetch("/api/orders/review/submit/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ order_item_id: orderItemId, rating: rating, comment: "" })
+    });
+
+    const data = await res.json().catch(()=>({}));
+
+    if (!res.ok) {
+      if (msgEl) msgEl.textContent = data.error || "Failed";
+      return;
+    }
+
+    box.outerHTML = `
+      <div class="ajio-rated-done">
+        You Rated&nbsp;&nbsp;
+        <span class="ajio-stars-static">${"★".repeat(rating)}${"☆".repeat(5-rating)}</span>
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    if (msgEl) msgEl.textContent = "Network error";
+  }
+}
+
+/* =========================
+   DATE FORMAT
+========================= */
+function formatDate(dt){
+  const d = new Date(dt);
+  return d.toLocaleDateString("en-IN", { weekday:"short", day:"2-digit", month:"short" });
+}
+</script>
+{% endblock %}

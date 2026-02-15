@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+{% block extra_css %}{% endblock %}
+
+<div class="account-wrapper">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="account-sidebar">
+
+        <h3>My Account</h3>
+
+        <div class="menu-section">
+            <p class="menu-title">Orders & Credits</p>
+
+            <a href="{% url 'account-orders' %}" class="{% if active == 'orders' %}active{% endif %}">
+                Orders
+            </a>
+
+            <a href="{% url 'account-wallet' %}" class="{% if active == 'wallet' %}active{% endif %}">
+                AJIO Wallet
+            </a>
+
+            <a href="{% url 'account-invites' %}" class="{% if active == 'invites' %}active{% endif %}">
+                Invite Friends <span class="new">New</span>
+            </a>
+        </div>
+
+        <div class="menu-section">
+            <p class="menu-title">Profile</p>
+
+            <a href="{% url 'account-profile' %}" class="{% if active == 'profile' %}active{% endif %}">
+                Personal Information
+            </a>
+
+            <a href="{% url 'account-address_book' %}" class="{% if active == 'address' %}active{% endif %}">
+                Address Book
+            </a>
+
+            <a href="{% url 'account-payments' %}" class="{% if active == 'payments' %}active{% endif %}">
+                Payments
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- RIGHT CONTENT -->
+    <section class="account-content">
+        {% block account_content %}{% endblock %}
+    </section>
+
+</div>
+
+{% block extra_js %}{% endblock %}
+
+{% endblock %}

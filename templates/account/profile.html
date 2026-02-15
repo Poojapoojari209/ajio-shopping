@@ -1,0 +1,203 @@
+{% extends "account/base_account.html" %}
+
+{% block account_content %}
+
+<div class="profile-wrapper">
+
+  <h1 class="profile-title">Personal Information</h1>
+  <p class="profile-subtitle">
+    Hey there! Fill in your details for a personalized AJIO shopping experience.
+  </p>
+
+  <form class="profile-form" onsubmit="event.preventDefault(); savePersonalInfo();">
+
+    <!-- FIRST NAME -->
+    <div class="form-group">
+      <label>First Name*</label>
+      <input type="text" id="piFirstName">
+    </div>
+
+    <!-- LAST NAME -->
+    <div class="form-group">
+      <label>Last Name*</label>
+      <input type="text" id="piLastName">
+    </div>
+
+    <!-- SCREEN NAME -->
+    <div class="form-group">
+      <label>Screen Name</label>
+      <input type="text" id="piScreenName">
+    </div>
+
+    <!-- EMAIL (READ ONLY) -->
+    <div class="form-group inline">
+      <div>
+        <label>Email Address*</label>
+        <p class="readonly" id="piEmail">—</p>
+      </div>
+      <a href="javascript:void(0)" class="change-link">CHANGE</a>
+    </div>
+
+    <!-- DOB -->
+    <div class="section-title">Date of Birth</div>
+    <div class="form-group">
+      <input type="date" id="piDob">
+    </div>
+
+    <!-- GENDER -->
+    <div class="form-group radio-group">
+      <label>Gender</label>
+      <div class="radio-options">
+        <label>
+          <input type="radio" id="piGenderFemale" name="gender" value="Female">
+          Female
+        </label>
+        <label>
+          <input type="radio" id="piGenderMale" name="gender" value="Male">
+          Male
+        </label>
+      </div>
+    </div>
+
+    <!-- PHONE (READ ONLY) -->
+    <div class="form-group inline">
+      <div>
+        <label>Telephone +91*</label>
+        <p class="readonly" id="piPhone">—</p>
+      </div>
+      <a href="javascript:void(0)" class="change-link">CHANGE</a>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="form-actions">
+      <button type="button" class="btn-restore" onclick="restorePersonalInfo()">RESTORE</button>
+      <button type="submit" class="btn-update">UPDATE</button>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ==========================
+   PERSONAL INFO (AJIO STYLE)
+========================== */
+
+const PROFILE_ENDPOINT = "/api/users/me/";
+
+function getToken() {
+  return localStorage.getItem("access");
+}
+
+// optional: if your main.js has logout/openLogin, it will work. If not, this is safe.
+function clearAuth() {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("username");
+  localStorage.removeItem("user_id");
+}
+
+function $(id){ return document.getElementById(id); }
+
+function fillProfileForm(data) {
+  $("piFirstName").value = data.first_name || "";
+  $("piLastName").value = data.last_name || "";
+  $("piScreenName").value = data.screen_name || "";
+  $("piDob").value = data.dob || "";
+
+  // READ ONLY (p tags)
+  $("piEmail").innerText = data.email || "Not Added";
+  $("piPhone").innerText = data.phone || "Not Added";
+
+  const g = (data.gender || "").toLowerCase();
+  $("piGenderFemale").checked = (g === "female");
+  $("piGenderMale").checked = (g === "male");
+}
+
+async function fetchProfile() {
+  const token = getToken();
+  if (!token) return null;
+
+  const res = await fetch(PROFILE_ENDPOINT, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  if (res.status === 401) {
+    // session expired
+    clearAuth();
+    if (window.updateTopbar) window.updateTopbar();
+    if (window.updateCartCount) window.updateCartCount();
+    alert("Session expired. Please login again.");
+    if (window.openLogin) window.openLogin();
+    return null;
+  }
+
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+async function savePersonalInfo() {
+  const token = getToken();
+  if (!token) {
+    alert("Please login again");
+    if (window.openLogin) window.openLogin();
+    return;
+  }
+
+  const payload = {
+    first_name: $("piFirstName").value.trim(),
+    last_name: $("piLastName").value.trim(),
+    screen_name: $("piScreenName").value.trim(),
+    dob: $("piDob").value || null,
+    gender: $("piGenderFemale").checked ? "Female" :
+            $("piGenderMale").checked ? "Male" : ""
+  };
+
+  const res = await fetch(PROFILE_ENDPOINT, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.status === 401) {
+    clearAuth();
+    if (window.updateTopbar) window.updateTopbar();
+    alert("Session expired. Please login again.");
+    if (window.openLogin) window.openLogin();
+    return;
+  }
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    console.log("Update error:", data);
+    alert(data.detail || "Update failed");
+    return;
+  }
+
+  fillProfileForm(data);
+  alert("Personal information updated");
+}
+
+async function restorePersonalInfo() {
+  const data = await fetchProfile();
+  if (data) fillProfileForm(data);
+}
+
+// expose global for onclick
+window.savePersonalInfo = savePersonalInfo;
+window.restorePersonalInfo = restorePersonalInfo;
+
+// AUTO LOAD
+document.addEventListener("DOMContentLoaded", async () => {
+  const data = await fetchProfile();
+  if (data) fillProfileForm(data);
+});
+</script>
+{% endblock %}

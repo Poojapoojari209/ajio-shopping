@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- HERO SLIDER-->
+<div class="hero-slider main-slider">
+
+  <div class="slides">
+
+    <!-- SLIDE 1 : 50-90% OFF -->
+    <div class="slide active">
+      <a href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?min_offer=50&max_offer=90">
+        <img src="{% static 'images/ajio_mainBanner1.jpg' %}" alt="AJIO Banner 1">
+      </a>
+    </div>
+
+    <!-- SLIDE 2 : MIN 65% OFF -->
+    <div class="slide">
+      <a href="{% url 'category_products' 'women' 'women_clothing' 'women_kurtas' %}?min_offer=65">
+        <img src="{% static 'images/ajio_mainBanner2.jpg' %}" alt="AJIO Banner 2">
+      </a>
+    </div>
+
+    <!-- SLIDE 3 : MIN 60% OFF -->
+    <div class="slide">
+      <a href="{% url 'category_products' 'men' 'clothing' 'shirts' %}?min_offer=60">
+        <img src="{% static 'images/ajio_mainBanner3.jpg' %}" alt="AJIO Banner 3">
+      </a>
+    </div>
+
+    <!-- SLIDE 4 : MIN 40% OFF -->
+    <div class="slide">
+      <a href="{% url 'category_products' 'women' 'women_accessories' 'jewellery' %}?min_offer=40">
+        <img src="{% static 'images/ajio_mainBanner4.jpg' %}" alt="AJIO Banner 4">
+      </a>
+    </div>
+
+    <!-- SLIDE 5 : MIN 50% OFF -->
+    <div class="slide">
+      <a href="{% url 'category_products' 'men' 'footware' 'casual_shoes' %}?min_offer=50">
+        <img src="{% static 'images/ajio_mainBanner5.jpg' %}" alt="AJIO Banner 5">
+      </a>
+    </div>
+
+  </div>
+
+  <!-- SLIDER ARROWS -->
+  <span class="prev">&#10094;</span>
+  <span class="next">&#10095;</span>
+
+  <!-- SLIDER DOTS -->
+  <div class="dots"></div>
+
+</div>
+<!-- END HERO SLIDER  -->
+
+
+<!-- SubBanner SLIDER-->
+<div class="hero-slider sub-slider">
+
+  <div class="Sub_slides">
+    <div class="sub-slide active">
+      <img src="{% static 'images/ajio_subBanner1.jpg' %}" alt="AJIO subBanner 1">
+    </div>
+
+    <div class="sub-slide">
+      <img src="{% static 'images/ajio_subBanner2.jpg' %}" alt="AJIO subBanner 2">
+    </div>
+
+    <div class="sub-slide">
+      <img src="{% static 'images/ajio_subBanner3.jpg' %}" alt="AJIO subBanner 3">
+    </div>
+  </div>
+
+  <!-- SLIDER ARROWS -->
+  <span class="sub-prev">&#10094;</span>
+  <span class="sub-next">&#10095;</span>
+
+  <!-- SLIDER DOTS -->
+  <div class="sub-dots"></div>
+
+</div>
+<!-- END HERO SLIDER  -->
+
+
+<!-- AJIO EXCLUSIVES -->
+<section class="section">
+  <h2>AJIO EXCLUSIVES</h2>
+  <br>
+
+  <div class="slider-wrapper">
+    <!-- LEFT ARROW -->
+    <button class="arrow left" onclick="slideLeft('cardRow')">&#10094;</button>
+
+    <!-- CARDS -->
+    <div class="card-row" id="cardRow">
+
+      <div class="card">
+          <a href="{% url 'category_products' 'women' 'women_clothing' 'tops' %}?min_offer=40&max_offer=50&brand=zara">
+          <img src="{% static 'images/cat1.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">ZARA</span>
+          <span class="offer-text">40-50% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?max_price=999&brand=shein">
+          <img src="{% static 'images/cat2.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">SHEIN</span>
+          <span class="offer-text">UNDER ₹999</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'women' 'women_clothing' 'women_jeans' %}?min_offer=20&brand=levis">
+          <img src="{% static 'images/cat3.jpg' %}">
+        </a>
+        <div class="card-overlay">s
+          <span class="brand-name">LEVIS</span>
+          <span class="offer-text">MIN. 20% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'kids' 'girls' 'dresses' %}?max_price=999&brand=playday">
+          <img src="{% static 'images/cat7.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">PLAYDAY</span>
+          <span class="offer-text">UNDER ₹999</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'clothing' 'suit_sets' %}?min_offer=35&brand=arrow">
+          <img src="{% static 'images/cat9.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">ARROW</span>
+          <span class="offer-text">MIN. 35% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'footware' 'casual_shoes' %}?min_offer=45&brand=puma">
+          <img src="{% static 'images/cat10.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">PUMA</span>
+          <span class="offer-text">MIN. 45% OFF</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT ARROW -->
+    <button class="arrow right" onclick="slideRight('cardRow')">&#10095;</button>
+  </div>
+</section>
+
+
+<!-- Gear Up For New Brands -->
+<section class="section">
+  <h2>Gear Up For New Brands</h2>
+  <br>
+
+  <div class="slider-wrapper">
+    <button class="arrow left" onclick="slideLeft('cardRow1')">&#10094;</button>
+
+    <div class="card-row" id="cardRow1">
+
+      <div class="card">
+         <a href="{% url 'category_products' 'women' 'women_clothing' 'women_kurtas' %}?min_offer=10&brand=max">
+          <img src="{% static 'images/cat4.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">MAX</span>
+          <span class="offer-text">MIN. 10% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+          <a href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?max_price=999&brand=shein">
+          <img src="{% static 'images/cat5.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">SHEIN</span>
+          <span class="offer-text">UNDER ₹999</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'accessories' 'watches' %}?min_offer=30&brand=titan">
+          <img src="{% static 'images/cat8.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">TITAN</span>
+          <span class="offer-text">MIN. 30% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'clothing' 'suit_sets' %}?max_price=999&brand=kotty">
+          <img src="{% static 'images/cat6.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">KOTTY</span>
+          <span class="offer-text">UNDER ₹999</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?min_offer=65&brand=skybag">
+          <img src="{% static 'images/cat11.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">SKYBAG</span>
+          <span class="offer-text">MIN. 65% OFF</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <a href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?min_offer=55&brand=shein">
+          <img src="{% static 'images/cat12.jpg' %}">
+        </a>
+        <div class="card-overlay">
+          <span class="brand-name">SHEIN</span>
+          <span class="offer-text">MIN. 55% OFF</span>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="arrow right" onclick="slideRight('cardRow1')">&#10095;</button>
+  </div>
+</section>
+
+{% endblock %}

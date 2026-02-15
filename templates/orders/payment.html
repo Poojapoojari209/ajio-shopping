@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}">
+
+<div class="ajio-pay-page">
+
+  <!-- TOP GIFT CARD STRIP -->
+  <div class="gift-strip">
+    <div class="gift-left">
+      <span class="gift-icon">🎁</span>
+      <div>
+        <div class="gift-title">Have a Gift Card?</div>
+        <div class="gift-sub">Add it to AJIO Wallet to pay for your orders</div>
+      </div>
+    </div>
+    <a class="gift-link" href="#">Add Gift Card</a>
+  </div>
+
+  <div class="ajio-pay-grid">
+
+    <!-- MAIN LEFT AREA -->
+    <div class="pay-main">
+      <h2 class="pay-heading">Select Payment Mode</h2>
+
+      <div class="pay-box">
+        <!-- LEFT MENU -->
+        <aside class="pay-menu" id="payMenu">
+          <button class="menu-item active" data-tab="card" type="button">Credit/ Debit Card</button>
+          <button class="menu-item" data-tab="netbanking" type="button">NetBanking</button>
+          <button class="menu-item" data-tab="wallet" type="button">Wallet</button>
+          <button class="menu-item" data-tab="upi" type="button">UPI</button>
+          <button class="menu-item" data-tab="emi" type="button">EMI</button>
+          <button class="menu-item" data-tab="cod" type="button">Cash on Delivery</button>
+        </aside>
+
+        <!-- RIGHT CONTENT -->
+        <section class="pay-content">
+
+          <!-- CARD TAB -->
+          <div class="tab show" id="tab-card">
+            <div class="tab-title">Add New Card</div>
+
+            <div class="form-grid">
+              <div class="field full">
+                <label>Card Number</label>
+                <input type="text" placeholder="" />
+              </div>
+
+              <div class="field full">
+                <label>Name on Card</label>
+                <input type="text" placeholder="" />
+              </div>
+
+              <div class="field">
+                <label>Expiration Date</label>
+                <div class="row2">
+                  <select>
+                    <option>Month</option>
+                    {% for m in months %}
+                      <option>{{ m }}</option>
+                    {% endfor %}
+                  </select>
+                  <select>
+                    <option>Year</option>
+                    {% for y in years %}
+                      <option>{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>CVV <a href="#" class="mini-link">(What’s This?)</a></label>
+                <input type="password" placeholder="" />
+              </div>
+
+              <label class="save-card">
+                <input type="checkbox" checked />
+                <span>Save this card securely</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- NETBANKING TAB -->
+          <div class="tab" id="tab-netbanking">
+            <div class="tab-title">NetBanking</div>
+            <p class="muted">Payment will be completed securely via Razorpay.</p>
+          </div>
+
+          <!-- WALLET TAB -->
+          <div class="tab" id="tab-wallet">
+            <div class="tab-title">Wallet</div>
+            <p class="muted">Pay securely using wallets via Razorpay.</p>
+          </div>
+
+          <!-- UPI TAB -->
+          <div class="tab" id="tab-upi">
+            <div class="tab-title">UPI</div>
+            <p class="muted">Pay securely using UPI via Razorpay.</p>
+          </div>
+
+          <!-- EMI TAB -->
+          <div class="tab" id="tab-emi">
+            <div class="tab-title">EMI</div>
+            <p class="muted">EMI options depend on Razorpay / bank availability.</p>
+          </div>
+
+          <!-- COD TAB (AJIO FLOW) -->
+          <div class="tab" id="tab-cod">
+            <div class="tab-title">Cash on Delivery</div>
+            <p class="muted">Pay when your order is delivered.</p>
+
+            <!-- ONLY button here -->
+            <button
+              type="button"
+              class="pay-btn"
+              id="codOpenBtn"
+              data-item-total="{{ order_total|default:'0.00' }}"
+              data-cod-fee="{{ cod_fee|default:'29.00' }}"
+            >
+              PLACE ORDER (COD)
+            </button>
+
+            <div class="tnc" style="margin-top:12px;">
+              By placing this order, you agree to AJIO's <a href="#">T&amp;C</a>
+            </div>
+          </div>
+
+          <!-- PAY BUTTON (Online only) -->
+          <div class="pay-footer" id="payFooterOnline">
+            <button
+              id="payNowBtn"
+              class="pay-btn"
+              type="button"
+              data-amount="{{ amount|default:0 }}"
+              data-name="{{ request.user.get_full_name|default:'Customer' }}"
+              data-email="{{ request.user.email|default:'' }}"
+              data-phone="{{ phone|default:'' }}"
+            >
+              PAY ₹{{ amount|default:"0.00" }} SECURELY
+            </button>
+
+            <div class="tnc">
+              By placing this order, you agree to AJIO's <a href="#">T&amp;C</a>
+            </div>
+          </div>
+
+        </section>
+      </div>
+    </div>
+
+    <!-- RIGHT SUMMARY -->
+    <aside class="summary">
+      <div class="summary-card">
+        <div class="sum-top">
+          <div class="sum-title">Convenience Fee <a href="#" class="mini-link">What's this?</a></div>
+        </div>
+
+        <div class="sum-row subtle">
+          <span>Delivery Fee</span>
+          <span><span>₹{{ delivery_fee|default:"99" }}</span> <b></b></span>
+        </div>
+
+        <div class="sum-row">
+          <span>Platform Fee</span>
+          <span>₹ {{ platform_fee|default:"0" }}</span>
+        </div>
+
+        <div class="sum-row bold">
+          <span>Order Total</span>
+          <span>₹ {{ order_total|default:"0.00" }}</span>
+        </div>
+
+        <div class="sum-row bold">
+          <span>Amount Payable</span>
+          <span>₹ {{ amount|default:"0.00" }}</span>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- ===================== COD MODAL (AJIO STYLE) ===================== -->
+<div class="ajio-modal-overlay" id="codOverlay" aria-hidden="true">
+  <div class="ajio-modal" role="dialog" aria-modal="true" aria-labelledby="codTitle">
+    <button class="ajio-modal-close" id="codCloseBtn" aria-label="Close" type="button">×</button>
+
+    <div class="ajio-modal-head">
+      <div class="ajio-modal-title" id="codTitle">Cash on delivery</div>
+      <div class="ajio-modal-sub">
+        You have opted to pay cash on delivery. Cash on Delivery fee is ₹<b><span id="codFeeText">0.00</span></b>.
+      </div>
+    </div>
+
+    <div class="ajio-modal-box">
+      <div class="ajio-modal-row">
+        <span>Item Total</span>
+        <span>₹ <span id="codItemTotalText">0.00</span></span>
+      </div>
+      <div class="ajio-modal-row">
+        <span>Cash on Delivery Fee</span>
+        <span>₹ <span id="codFeeText2">0.00</span></span>
+      </div>
+      <div class="ajio-modal-row bold">
+        <span>Amount to be paid</span>
+        <span>₹ <span id="codAmountText">0.00</span></span>
+      </div>
+    </div>
+
+    <button class="ajio-modal-primary" id="codConfirmBtn" type="button">Confirm Order</button>
+    <button class="ajio-modal-secondary" id="codCancelBtn" type="button">Choose another Payment Mode</button>
+  </div>
+</div>
+<!-- ===================================================== -->
+
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+/* ---------------- Tabs + hide PAY footer when COD ---------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const menu = document.getElementById("payMenu");
+  const payFooterOnline = document.getElementById("payFooterOnline");
+
+  function setFooterVisibility(tab) {
+    if (!payFooterOnline) return;
+    payFooterOnline.style.display = (tab === "cod") ? "none" : "block";
+  }
+
+  setFooterVisibility("card"); // default tab
+
+  if (menu) {
+    menu.addEventListener("click", (e) => {
+      const btn = e.target.closest(".menu-item");
+      if (!btn) return;
+
+      document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const tab = btn.dataset.tab;
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("show"));
+      const active = document.getElementById(`tab-${tab}`);
+      if (active) active.classList.add("show");
+
+      setFooterVisibility(tab);
+    });
+  }
+});
+
+/* ---------------- Helpers ---------------- */
+function getToken() {
+  return localStorage.getItem("access");
+}
+
+function tokenOk() {
+  const t = getToken();
+  return t && (typeof isTokenValid === "function" ? isTokenValid(t) : true);
+}
+function requireOtpLogin() {
+  // open OTP modal (no redirect)
+  if (typeof clearAuth === "function") clearAuth();
+  if (typeof openLogin === "function") openLogin();
+}
+
+function setBtnLoading(btn, loading) {
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.style.opacity = loading ? "0.7" : "1";
+  btn.style.cursor = loading ? "not-allowed" : "pointer";
+}
+function money2(x) {
+  return Number(x || 0).toFixed(2);
+}
+
+let orderId = localStorage.getItem("order_id");
+
+/* Ensure user logged in before API calls */
+function ensureLoggedInOrOpenOtp() {
+  if (!tokenOk()) {
+    requireOtpLogin();
+    return false;
+  }
+  return true;
+}
+
+/* Create order if not exist */
+async function ensureOrder() {
+  if (orderId) return orderId;
+
+  if (!ensureLoggedInOrOpenOtp()) return null;
+
+  const token = getToken();
+  const addressId = localStorage.getItem("selected_address_id");
+
+  if (!addressId) { alert("Please select delivery address first"); return null; }
+
+  const res = await fetch("/api/orders/create/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ address_id: parseInt(addressId, 10) })
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401) {
+    requireOtpLogin();
+    return null;
+  }
+
+  if (!res.ok) {
+    alert(data.error || "Order creation failed");
+    return null;
+  }
+
+  orderId = data.order_id;
+  localStorage.setItem("order_id", orderId);
+  return orderId;
+}
+
+/* Create Razorpay order */
+async function createRazorpayOrder(oid) {
+  if (!ensureLoggedInOrOpenOtp()) return null;
+  const token = getToken();
+
+  const res = await fetch("/api/orders/razorpay/create-order/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ order_id: oid })
+  });
+
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch (e) {}
+
+  
+  if (res.status === 401) {
+    requireOtpLogin();
+    return null;
+  }
+
+  if (!res.ok) throw new Error(data.error || "Razorpay create-order failed");
+  return data;
+}
+
+/* Verify payment */
+async function verifyPayment(payload) {
+  if (!ensureLoggedInOrOpenOtp()) return null;
+  const token = getToken();
+
+  const res = await fetch("/api/orders/razorpay/verify/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    requireOtpLogin();
+    return null;
+  }
+
+  if (!res.ok) throw new Error(data.error || "Payment verification failed");
+  return data;
+}
+
+/* ---------------- Razorpay Pay Now ---------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const payBtn = document.getElementById("payNowBtn");
+  if (!payBtn) return;
+
+  payBtn.addEventListener("click", async () => {
+    if (!ensureLoggedInOrOpenOtp()) return;
+
+
+    setBtnLoading(payBtn, true);
+
+    try {
+      const oid = await ensureOrder();
+      if (!oid) { setBtnLoading(payBtn, false); return; }
+
+      const data = await createRazorpayOrder(oid);
+
+      const customerName = payBtn.dataset.name || "Customer";
+      const email = payBtn.dataset.email || "";
+      const phone = payBtn.dataset.phone || "";
+
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: "INR",
+        name: "AJIO",
+        description: "Order Payment",
+        order_id: data.razorpay_order_id,
+
+        prefill: { name: customerName, email: email, contact: phone },
+
+        theme: { color: "#0b2a3a" },
+
+        handler: async function (response) {
+          try {
+            await verifyPayment({
+              order_id: oid,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+
+            // no alert
+            localStorage.removeItem("order_id");
+            window.location.href = `/orders/confirm/${oid}/`;
+          } catch (err) {
+            console.error(err);
+            alert(err.message || "Payment verify failed");
+          } finally {
+            setBtnLoading(payBtn, false);
+          }
+        },
+
+        modal: {
+          ondismiss: function () {
+            setBtnLoading(payBtn, false);
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+
+      rzp.on("payment.failed", function (resp) {
+        console.error("Payment failed:", resp.error);
+        alert(resp.error?.description || "Payment failed. Please try again.");
+        setBtnLoading(payBtn, false);
+      });
+
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Something went wrong");
+      setBtnLoading(payBtn, false);
+    }
+  });
+});
+
+/* ---------------- COD Modal Flow ---------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const codOverlay = document.getElementById("codOverlay");
+  const codOpenBtn = document.getElementById("codOpenBtn");
+  const codCloseBtn = document.getElementById("codCloseBtn");
+  const codCancelBtn = document.getElementById("codCancelBtn");
+  const codConfirmBtn = document.getElementById("codConfirmBtn");
+
+  if (!codOpenBtn || !codOverlay || !codConfirmBtn) return;
+
+  function openCodModal(itemTotal, codFee) {
+    document.getElementById("codItemTotalText").textContent = money2(itemTotal);
+    document.getElementById("codFeeText").textContent = money2(codFee);
+    document.getElementById("codFeeText2").textContent = money2(codFee);
+    document.getElementById("codAmountText").textContent = money2(Number(itemTotal) + Number(codFee));
+
+    codOverlay.classList.add("show");
+    codOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeCodModal() {
+    codOverlay.classList.remove("show");
+    codOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  codOpenBtn.addEventListener("click", async () => {
+    if (!ensureLoggedInOrOpenOtp()) return;
+    const oid = await ensureOrder();
+    if (!oid) return;
+
+    
+
+    const itemTotal = Number(codOpenBtn.dataset.itemTotal || 0);
+    const codFee = Number(codOpenBtn.dataset.codFee || 29);
+    openCodModal(itemTotal, codFee);
+  });
+
+  codCloseBtn && codCloseBtn.addEventListener("click", closeCodModal);
+  codCancelBtn && codCancelBtn.addEventListener("click", closeCodModal);
+
+  codOverlay.addEventListener("click", (e) => {
+    if (e.target === codOverlay) closeCodModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeCodModal();
+  });
+
+  codConfirmBtn.addEventListener("click", async () => {
+    if (!ensureLoggedInOrOpenOtp()) return;
+
+    setBtnLoading(codConfirmBtn, true);
+
+    try {
+      const oid = await ensureOrder();
+      if (!oid) return;
+
+      const token = getToken();
+
+      const res = await fetch("/api/orders/payment/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ order_id: oid, payment_method: "COD" })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "COD failed");
+        return;
+      }
+
+      // AJIO-like: no alert, redirect to confirm page
+      closeCodModal();
+      localStorage.removeItem("order_id");
+      window.location.href = `/orders/confirm/${oid}/`;
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Something went wrong");
+    } finally {
+      setBtnLoading(codConfirmBtn, false);
+    }
+  });
+});
+</script>
+
+{% endblock %}

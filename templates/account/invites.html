@@ -1,0 +1,77 @@
+{% extends "account/base_account.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+{% endblock %}
+
+{% block account_content %}
+
+<div class="invite-page">
+
+  <!-- TOP GRADIENT SECTION -->
+  <div class="invite-hero">
+    <h1>Invite Friends &amp; Earn</h1>
+    <p>Invite Friends &amp; Earn ₹ 100 AJIO Points For Every Friend</p>
+
+    <div class="invite-card">
+
+      <!-- single image -->
+      <div class="invite-big-image">
+        <img src="{% static 'images/invitefriend.jpg' %}" alt="Invite Friends">
+      </div>
+
+      <!-- REFERRAL BAR -->
+      <div class="ref-bar">
+        <span class="ref-label">Referral Code:</span>
+
+        <span class="ref-code" id="refCode">POOB9P75S</span>
+
+        <div class="ref-actions">
+          <button type="button" class="ref-btn" onclick="copyReferral()">
+            <i class="fa-regular fa-copy"></i>
+            <span>copy</span>
+          </button>
+
+          <button type="button" class="ref-btn" onclick="shareReferral()">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>share</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FAQ SECTION -->
+  <div class="invite-faq">
+    <div class="faq-icon">?</div>
+    <h2>FAQs</h2>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyReferral(){
+  const code = document.getElementById("refCode").innerText.trim();
+  navigator.clipboard.writeText(code);
+  alert("Referral code copied!");
+}
+
+function shareReferral(){
+  const code = document.getElementById("refCode").innerText.trim();
+  const text = `Use my AJIO referral code: ${code}`;
+
+  if (navigator.share) {
+    navigator.share({ title: "AJIO Referral", text });
+  } else {
+    navigator.clipboard.writeText(text);
+    alert("Share text copied!");
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "account/base_account.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+{% endblock %}
+
+{% block account_content %}
+
+<!-- PAGE HEADER -->
+<div class="address-header">
+    <h1>Address Book</h1>
+    <p>Save all your addresses for a faster checkout experience.</p>
+</div>
+
+<!-- ADDRESS LIST -->
+<div class="address-section">
+
+    <!-- ADD NEW ADDRESS TILE -->
+    <div class="addAddrBox" onclick="openAddressPanel()">
+        <div class="addrcenter" role="button" tabindex="0">
+            <span class="ic-Add-Address">＋</span>
+            <span>Add new address</span>
+        </div>
+    </div>
+
+    <!-- ADDRESSES WILL BE RENDERED BY JS HERE -->
+    <div id="addressCards"></div>
+
+</div>
+
+<p id="addrListMsg" style="color:#c00;margin-top:12px;"></p>
+
+<!-- OVERLAY -->
+<div id="addressOverlay" class="overlay" onclick="closeAddressPanel()"></div>
+
+<!-- SLIDE PANEL -->
+<div id="addressPanel" class="address-panel">
+
+  <div class="panel-header">
+    <h2>Add new address</h2>
+    <span class="close" onclick="closeAddressPanel()">✕</span>
+  </div>
+
+  <!-- IMPORTANT: no normal POST -->
+  <form id="addressForm" class="address-form" action="javascript:void(0);">
+
+    <label>Name *</label>
+    <input type="text" name="name" required>
+
+    <label>Mobile *</label>
+    <input type="text" name="mobile" required>
+
+    <label>Pin Code *</label>
+    <input type="text" name="pincode" required>
+
+    <label>Locality / Area / Street *</label>
+    <input type="text" name="area" required>
+
+    <label>Flat number / Building Name *</label>
+    <input type="text" name="address_line" required>
+
+    <label>Landmark</label>
+    <input type="text" name="landmark">
+
+    <label>District/City *</label>
+    <input type="text" name="city" required>
+
+    <label>State *</label>
+    <input type="text" name="state" required>
+
+    <div class="address-type">
+      <p>Address Type</p>
+      <label><input type="radio" name="type" value="HOME" checked> Home</label>
+      <label><input type="radio" name="type" value="WORK"> Work</label>
+      <label><input type="radio" name="type" value="OTHER"> Others</label>
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" name="is_default">
+      Make as default Address
+    </label>
+
+    <p id="addrMsg" style="color:#c00;margin-top:10px;"></p>
+
+    <div class="panel-actions">
+      <button type="reset" class="reset-btn">RESET</button>
+      <button type="submit" class="save-btn">SAVE</button>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/address_book.js' %}"></script>
+{% endblock %}

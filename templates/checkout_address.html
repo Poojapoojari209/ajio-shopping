@@ -1,0 +1,57 @@
+<h2>Select Delivery Address</h2>
+
+<div id="addressList"></div>
+
+<button id="placeOrderBtn" disabled>PLACE ORDER</button>
+
+<script>
+let selectedAddressId = null;
+
+fetch("/api/users/address/", {
+  headers: {
+    "Authorization": "Bearer " + localStorage.getItem("access")
+  }
+})
+.then(res => res.json())
+.then(data => {
+  const div = document.getElementById("addressList");
+  data.forEach(addr => {
+    div.innerHTML += `
+      <label>
+        <input type="radio" name="address" 
+               onchange="selectAddress(${addr.id})">
+        ${addr.address_line}, ${addr.city}, ${addr.state}
+      </label><br>
+    `;
+  });
+});
+
+function selectAddress(id) {
+  selectedAddressId = id;
+  document.getElementById("placeOrderBtn").disabled = false;
+}
+
+document.getElementById("placeOrderBtn").onclick = function () {
+  placeOrder();
+};
+
+
+function placeOrder() {
+  fetch("/api/orders/create/", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("access"),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      address_id: selectedAddressId
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    window.location.href = `/payment/${data.order_id}/`;
+  });
+}
+
+
+</script>

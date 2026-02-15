@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/payment.css' %}?v=1">
+
+<div class="ajio-confirm-wrap">
+
+  <!-- top message + continue -->
+  <div class="ajio-confirm-top">
+    <div class="ajio-confirm-lefthead">
+      <div class="ajio-confirm-title">
+        Your order is confirmed <span class="ajio-check"></span>
+      </div>
+      <div class="ajio-confirm-sub">
+        Order ID: <span id="orderNo">#</span>
+      </div>
+    </div>
+
+    <a class="ajio-confirm-btn" href="/">CONTINUE SHOPPING</a>
+  </div>
+
+  <div class="ajio-confirm-grid">
+
+    <!-- LEFT -->
+    <div class="ajio-confirm-left">
+
+      <!-- Order Summary -->
+      <div class="ajio-card">
+        <div class="ajio-card-title">Order Summary</div>
+
+        <div id="orderSummary">
+          <div class="ajio-muted">Loading order...</div>
+        </div>
+      </div>
+
+      <!-- Loving Ajio -->
+      <div class="ajio-card ajio-love">
+        <div class="ajio-love-title">Loving Ajio?</div>
+        <div class="ajio-love-sub">
+          Based on your overall shopping experience, how likely are you to recommend AJIO to friends and family?
+        </div>
+
+        <div class="ajio-scale" id="ratingScale"></div>
+
+        <button class="ajio-love-btn" onclick="window.location.href='/'">
+          SUBMIT &amp; CONTINUE
+        </button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="ajio-confirm-right">
+
+      <!-- What Happens Next -->
+      <div class="ajio-card">
+        <div class="ajio-right-title">What Happens Next:</div>
+
+        <ul class="ajio-next">
+          <li>Sit back and relax!</li>
+          <li>We will send your order confirmation details to your registered email address and mobile number.</li>
+          <li>We will inform you as soon as your package is dispatched.</li>
+          <li>Once dispatched, you can track your order details through your <b>Account</b> page.</li>
+        </ul>
+      </div>
+
+      <!-- Order Details + Address -->
+      <div class="ajio-card">
+        <div class="ajio-card-title">Order Details</div>
+
+        <div class="ajio-row"><span>Bag total</span><span id="bagTotal">-</span></div>
+        <div class="ajio-row"><span>Bag discount</span><span id="bagDiscount">-</span></div>
+        <div class="ajio-row"><span>Convenience fee</span><span id="fee">-</span></div>
+
+        <div class="ajio-row ajio-total">
+          <span>Order total</span><span id="orderTotal">-</span>
+        </div>
+
+        <div class="ajio-divider"></div>
+
+        <div class="ajio-card-title">Delivery Address</div>
+        <div id="addressBox" class="ajio-address ajio-muted">Loading address...</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  //  order id from Django context OR from URL
+  const ORDER_ID = ("{{ order_id|default:'' }}").trim()
+    || window.location.pathname.split("/").filter(Boolean).pop();
+
+  const TOKEN = localStorage.getItem("access");
+
+  //  fallback image (you said you keep it inside media)
+  const FALLBACK_IMG = "/media/no-image.png";
+
+  function money(n) {
+    const x = Number(n || 0);
+    return "₹" + x.toFixed(2);
+  }
+
+  function imgUrl(url) {
+    if (!url) return FALLBACK_IMG;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    if (url.startsWith("/")) return url;
+    return "/" + url;
+  }
+
+  // AJIO formatted order id
+  function formatAjioOrderId(id) {
+    const n = String(id || "").replace(/\D/g, "");
+    return "FN" + n.padStart(10, "0");
+  }
+
+  // rating 0-10
+  (function buildScale() {
+    const scale = document.getElementById("ratingScale");
+    if (!scale) return;
+    for (let i = 0; i <= 10; i++) {
+      const b = document.createElement("div");
+      b.className = "ajio-box";
+      b.innerText = i;
+      b.onclick = () => {
+        scale.querySelectorAll(".ajio-box").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+      };
+      scale.appendChild(b);
+    }
+  })();
+
+  async function loadConfirm() {
+    const summary     = document.getElementById("orderSummary");
+    const bagTotal    = document.getElementById("bagTotal");
+    const bagDiscount = document.getElementById("bagDiscount");
+    const fee         = document.getElementById("fee");
+    const orderTotal  = document.getElementById("orderTotal");
+    const addressBox  = document.getElementById("addressBox");
+    const orderNoEl   = document.getElementById("orderNo");
+
+    //  if not logged in
+    if (!TOKEN) {
+      summary.innerHTML = `<div class="ajio-muted">Please login to view order.</div>`;
+      addressBox.innerHTML = "";
+      bagTotal.innerText = "-";
+      bagDiscount.innerText = "-";
+      fee.innerText = "-";
+      orderTotal.innerText = "-";
+      if (orderNoEl) orderNoEl.innerText = formatAjioOrderId(ORDER_ID);
+      return;
+    }
+
+    //  call your API: /api/orders/detail/<id>/
+    let res, data;
+    try {
+      res = await fetch(`/api/orders/detail/${ORDER_ID}/`, {
+        headers: { "Authorization": "Bearer " + TOKEN }
+      });
+      data = await res.json().catch(() => ({}));
+    } catch (e) {
+      summary.innerHTML = `<div class="ajio-muted">Network error while loading order.</div>`;
+      addressBox.innerHTML = "";
+      bagTotal.innerText = "-";
+      bagDiscount.innerText = "-";
+      fee.innerText = "-";
+      orderTotal.innerText = "-";
+      if (orderNoEl) orderNoEl.innerText = formatAjioOrderId(ORDER_ID);
+      return;
+    }
+
+    if (!res.ok) {
+      summary.innerHTML = `<div class="ajio-muted">${data.error || data.detail || "Failed to load order."}</div>`;
+      addressBox.innerHTML = "";
+      bagTotal.innerText = "-";
+      bagDiscount.innerText = "-";
+      fee.innerText = "-";
+      orderTotal.innerText = "-";
+      if (orderNoEl) orderNoEl.innerText = formatAjioOrderId(ORDER_ID);
+      return;
+    }
+
+    //  SHOW ORDER ID (best: from API, fallback: formatted ORDER_ID)
+    const apiOrderId = data.formatted_order_id || data.order_no || data.order_id || data.id;
+    if (orderNoEl) orderNoEl.innerText = apiOrderId ? String(apiOrderId) : formatAjioOrderId(ORDER_ID);
+
+    //  ITEMS
+    const items = Array.isArray(data.items) ? data.items : [];
+    if (!items.length) {
+      summary.innerHTML = `<div class="ajio-muted">No items found.</div>`;
+    } else {
+      summary.innerHTML = items.map(it => {
+        const img  = imgUrl(it.product_image || it.image);
+        const name = it.product_name || it.name || "Product";
+        const qty  = it.quantity || it.qty || 1;
+
+        const size =
+          (typeof it.size === "string" && it.size) ? it.size :
+          (it.size && typeof it.size === "object" && (it.size.size || it.size.label)) ? (it.size.size || it.size.label) :
+          it.selected_size || it.product_size || it.size_label || it.variant_size || "-";
+
+        const unit = Number(it.price || it.unit_price || 0);
+        const mrp  = Number(it.mrp || 0);
+        const showMrp = mrp > unit;
+
+        return `
+          <div class="ajio-item">
+            <img class="ajio-item-img"
+                 src="${img}"
+                 onerror="this.src='${FALLBACK_IMG}'"
+                 alt="${name}">
+
+            <div class="ajio-item-mid">
+              <div class="ajio-item-name">${name}</div>
+
+              <div class="ajio-item-meta">
+                Size <b>${size}</b>
+                <span class="dot">•</span>
+                Qty <b>${qty}</b>
+              </div>
+            </div>
+
+            <div class="ajio-item-price">
+              <div class="final">${money(unit)}</div>
+              ${showMrp ? `<div class="mrp">${money(mrp)}</div>` : ``}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    //  TOTALS (support multiple key names)
+    const bt = data.bag_total ?? data.bagTotal ?? data.total_amount ?? data.total ?? 0;
+    const bd = data.bag_discount ?? data.discount ?? data.bagDiscount ?? 0;
+    const cf = data.convenience_fee ?? data.fee ?? data.convenienceFee ?? 0;
+    const ot = data.order_total ?? data.total_amount ?? data.total ?? 0;
+
+    bagTotal.innerText = money(bt);
+    bagDiscount.innerText = "-" + money(bd);
+    fee.innerText = money(cf);
+    orderTotal.innerText = money(ot);
+
+    //  ADDRESS
+    const a = data.address || {};
+    const addrLine = a.address_line || a.address || a.line1 || "";
+
+    if (addrLine || a.city || a.pincode) {
+      addressBox.classList.remove("ajio-muted");
+      addressBox.innerHTML = `
+        <div class="addr-name">${a.name || "User"} <span class="addr-tag">${a.tag || "OTHER"}</span></div>
+        <div>${addrLine}</div>
+        <div>${a.city || ""}${a.state ? ", " + a.state : ""}${a.pincode ? " - " + a.pincode : ""}</div>
+        ${(a.mobile || a.phone) ? `<div class="addr-phone">Phone: <b>${a.mobile || a.phone}</b></div>` : ``}
+      `;
+    } else {
+      addressBox.innerHTML = `<div class="ajio-muted">No address found</div>`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadConfirm);
+</script>
+
+{% endblock %}

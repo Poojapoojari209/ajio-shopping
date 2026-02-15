@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  Home / {{ gender.name }} / {{ category.name }} / {{ subcategory.name }}
+</div>
+
+<form id="filtersForm" method="get">
+
+  <div class="listing-container">
+
+    <!-- LEFT FILTER -->
+    <aside class="filters">
+
+      <h3 class="refine-title">Refine By</h3>
+
+      <!-- SHOP FOR (NAV) -->
+      <div class="acc open">
+        <button type="button" class="acc-btn" aria-expanded="true">
+          <span class="acc-sign">–</span>
+          <span class="acc-title">Shop For</span>
+        </button>
+
+        <div class="acc-panel">
+          <label class="chk nav-chk">
+            <input type="checkbox"
+                   {% if sel_gender == "men" %}checked{% endif %}
+                   data-nav="/men/{{ category.slug }}/{{ subcategory.slug }}/">
+            <span>Men ({{ products.count }})</span>
+          </label>
+
+          <label class="chk nav-chk">
+            <input type="checkbox"
+                   {% if sel_gender == "women" %}checked{% endif %}
+                   data-nav="/women/{{ category.slug }}/{{ subcategory.slug }}/">
+            <span>Women (3)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- CATEGORY (NAV) -->
+      <div class="acc open">
+        <button type="button" class="acc-btn" aria-expanded="true">
+          <span class="acc-sign">–</span>
+          <span class="acc-title">Category</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for sc in subcat_facets %}
+            <label class="chk nav-chk">
+              <input type="checkbox"
+                     {% if sc.slug == sel_subcat %}checked{% endif %}
+                     data-nav="/{{ gender.slug }}/{{ category.slug }}/{{ sc.slug }}/">
+              <span>{{ sc.name }} ({{ sc.cnt }})</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- PRICE -->
+      <div class="acc open">
+        <button type="button" class="acc-btn" aria-expanded="true">
+          <span class="acc-sign">–</span>
+          <span class="acc-title">Price</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for p in price_buckets %}
+            <label class="chk">
+              <input type="radio" name="max_price" value="{{ p.value }}"
+                     {% if sel_max_price == p.value %}checked{% endif %}>
+              <span>{{ p.label }}</span>
+            </label>
+          {% endfor %}
+
+          <button type="button" class="link-btn" id="clearPrice">Clear</button>
+        </div>
+      </div>
+
+      <!-- BRANDS -->
+      <div class="acc">
+        <button type="button" class="acc-btn" aria-expanded="false">
+          <span class="acc-sign">+</span>
+          <span class="acc-title">Brands</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for b in brand_facets %}
+            <label class="chk">
+              <input type="checkbox" name="brand" value="{{ b.brand__slug }}"
+                     {% if b.brand__slug in sel_brands %}checked{% endif %}>
+              <span>{{ b.brand__name }} ({{ b.cnt }})</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- DISCOUNT -->
+      <div class="acc">
+        <button type="button" class="acc-btn" aria-expanded="false">
+          <span class="acc-sign">+</span>
+          <span class="acc-title">Discount</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for d in discount_buckets %}
+            <label class="chk">
+              <input type="radio" name="min_offer" value="{{ d.value }}"
+                     {% if sel_min_offer == d.value %}checked{% endif %}>
+              <span>{{ d.label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- COLORS -->
+      <div class="acc">
+        <button type="button" class="acc-btn" aria-expanded="false">
+          <span class="acc-sign">+</span>
+          <span class="acc-title">Colors</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for c in color_facets %}
+            <label class="chk">
+              <input type="checkbox" name="color" value="{{ c.value }}"
+                     {% if c.value in sel_colors %}checked{% endif %}>
+              <span>{{ c.value }} ({{ c.cnt }})</span>
+            </label>
+          {% empty %}
+            <div style="font-size:12px;color:#777;">No colors found</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- SIZE & FIT -->
+      <div class="acc">
+        <button type="button" class="acc-btn" aria-expanded="false">
+          <span class="acc-sign">+</span>
+          <span class="acc-title">Size &amp; Fit</span>
+        </button>
+
+        <div class="acc-panel">
+          {% for s in size_facets %}
+            <label class="chk">
+              <input type="checkbox" name="size" value="{{ s.value }}"
+                     {% if s.value in sel_sizes %}checked{% endif %}>
+              <span>{{ s.value }} ({{ s.cnt }})</span>
+            </label>
+          {% empty %}
+            <div style="font-size:12px;color:#777;">No sizes found</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT PRODUCTS -->
+    <section class="products">
+
+      <!-- CATEGORY HEADER -->
+      <div class="category-header">
+        <span class="category-gender">{{ gender.name|upper }}'S</span>
+        <h1 class="category-title">{{ subcategory.name }}</h1>
+
+        
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="listing-toolbar">
+        <span class="items-count">{{ products.count }} Items Found</span>
+
+        <div class="grid-icons">
+          <span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="sort-box">
+          SORT BY
+          <select name="sort" id="sortSelect">
+            <option value="" {% if not sel_sort %}selected{% endif %}>Relevance</option>
+            <option value="low" {% if sel_sort == "low" %}selected{% endif %}>Price (Low to High)</option>
+            <option value="high" {% if sel_sort == "high" %}selected{% endif %}>Price (High to Low)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PRODUCT GRID -->
+      <div class="product-grid">
+        {% for product in products %}
+          <div class="product-card">
+            <div class="product-image-wrapper">
+              <a href="{% url 'product_detail' product.id %}">
+                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+              </a>
+
+              <button type="button" class="quick-view-btn" data-id="{{ product.id }}">
+                QUICK VIEW
+              </button>
+            </div>
+
+            <div class="product-brand">{{ product.brand.name }}</div>
+            <div class="product-name">{{ product.name }}</div>
+
+            <div class="product-price">
+              <!-- <span class="final-price">₹{{ product.discount_price }}</span>
+              <span class="original-price">₹{{ product.price }}</span> -->
+              {# Selling price (discount if exists else price) #}
+  <span class="final-price">
+    ₹{% if product.discount_price and product.discount_price < product.price %}
+      {{ product.discount_price }}
+    {% else %}
+      {{ product.price }}
+    {% endif %}
+  </span>
+
+  {# Show MRP + %off only when discount exists #}
+  {% if product.discount_price and product.discount_price < product.price and product.off_percent %}
+    <span class="mrp">₹{{ product.price }}</span>
+    <span class="off-text">({{ product.off_percent|floatformat:0 }}% off)</span>
+  {% endif %}
+             
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </section>
+
+  </div>
+
+</form>
+
+ <!-- ================= QUICK VIEW MODAL ================= -->
+<div id="qvOverlay" class="qv-overlay"></div>
+
+<div id="qvModal" class="qv-modal">
+  <button class="qv-close" type="button" id="qvClose">✕</button>
+
+  <div class="qv-body">
+
+    <!-- LEFT IMAGES -->
+    <div class="qv-left">
+      <div class="qv-thumbs" id="qvThumbs"></div>
+      <div class="qv-main">
+        <img id="qvMainImg" src="" alt="">
+      </div>
+    </div>
+
+    <!-- RIGHT DETAILS -->
+    <div class="qv-right">
+      <div class="qv-brand" id="qvBrand"></div>
+      <div class="qv-title" id="qvName"></div>
+
+      <div class="qv-price">
+        <span class="qv-final" id="qvFinal"></span>
+        <span class="qv-mrp" id="qvMrp"></span>
+      </div>
+
+      <!-- COLOR SECTION  -->
+      <div class="qv-color-section">
+  <div class="qv-color-label">
+    <span>Color:</span> <b id="qvColorName">-</b>
+    <a href="javascript:void(0)" id="qvMoreColors" style="display:none;">+ More</a>
+  </div>
+  <div class="qv-color-swatches" id="qvColorSwatches"></div>
+</div>
+
+      <div class="qv-size-section">
+        <div class="qv-size-title">Select Size</div>
+        <div class="qv-sizes" id="qvSizes"></div>
+        <div class="qv-error" id="qvSizeError">Please select a size</div>
+      </div>
+
+      <button type="button" class="qv-add" id="qvAddBtn">
+        <i class="fa fa-bag-shopping"></i> ADD TO BAG
+      </button>
+
+      <a href="#" class="qv-details" id="qvDetailsBtn">PRODUCT DETAILS</a>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("filtersForm");
+  const sortSelect = document.getElementById("sortSelect");
+
+  // Accordion (+ / –)
+  document.querySelectorAll(".acc-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const acc = btn.closest(".acc");
+      const open = acc.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      const sign = btn.querySelector(".acc-sign");
+      if (sign) sign.textContent = open ? "–" : "+";
+    });
+  });
+
+  // NAV checkboxes (Shop For, Category)
+  document.querySelectorAll(".nav-chk input[data-nav]").forEach((inp) => {
+    inp.addEventListener("change", () => {
+      const url = inp.dataset.nav;
+      if (url) window.location.href = url;
+    });
+  });
+
+  // Submit when any filter changes (includes sort)
+  if (form) {
+    form.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("change", () => form.submit());
+    });
+  }
+
+  if (sortSelect && form) {
+    sortSelect.addEventListener("change", () => form.submit());
+  }
+
+  // Clear price
+  const clearPrice = document.getElementById("clearPrice");
+  if (clearPrice && form) {
+    clearPrice.addEventListener("click", () => {
+      form.querySelectorAll('input[name="max_price"]').forEach(r => r.checked = false);
+      form.submit();
+    });
+  }
+});
+</script>
+
+{% endblock %}

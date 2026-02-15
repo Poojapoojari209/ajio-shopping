@@ -1,0 +1,91 @@
+{% extends "account/base_account.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+{% endblock %}
+
+{% block account_content %}
+
+<div class="wallet-page">
+
+  <h1 class="wallet-title">AJIO Wallet</h1>
+
+  <div class="wallet-card">
+
+    <!-- Total -->
+    <div class="wallet-total">
+      <div class="wallet-total-label">Total Wallet Balance</div>
+      <div class="wallet-total-amount">₹200</div>
+    </div>
+
+    <!-- SuperCash -->
+    <a class="wallet-row" href="#">
+      <div class="wallet-row-left">
+        <div class="wallet-row-title">SuperCash</div>
+        <div class="wallet-row-desc">
+          Earned from promotions &amp; offers at AJIO with limited validity. Use upto 100%* on every purchase.
+        </div>
+      </div>
+      <div class="wallet-row-right">
+        <div class="wallet-row-amt">₹200</div>
+        <div class="wallet-row-chevron">›</div>
+      </div>
+    </a>
+
+    <div class="wallet-strip">
+      ₹200 SuperCash expiring on 01 Mar, 2026
+    </div>
+
+    <!-- Cash -->
+    <a class="wallet-row" href="#">
+      <div class="wallet-row-left">
+        <div class="wallet-row-title">Cash</div>
+        <div class="wallet-row-desc">
+          Earned from return of AJIO orders when paid using cash at the time of delivery.
+        </div>
+      </div>
+      <div class="wallet-row-right">
+        <div class="wallet-row-amt">₹0</div>
+        <div class="wallet-row-chevron">›</div>
+      </div>
+    </a>
+
+    <!-- Gift card -->
+    <div class="wallet-gift">
+      <div class="wallet-gift-left">
+        <div class="wallet-row-title">Have a Gift Card?</div>
+        <div class="wallet-row-desc">Add to AJIO Wallet to pay for your orders</div>
+        <a class="wallet-tc" href="#">T&amp;C</a>
+      </div>
+
+      <div class="wallet-gift-right">
+        <a class="wallet-link" href="#">Check balance</a>
+        <a class="wallet-link" href="#">Add</a>
+      </div>
+    </div>
+
+    <!-- Spending history -->
+    <a class="wallet-row simple" href="#">
+      <div class="wallet-row-left">
+        <div class="wallet-row-title">Spending History</div>
+      </div>
+      <div class="wallet-row-right">
+        <div class="wallet-row-chevron">›</div>
+      </div>
+    </a>
+
+    <!-- FAQ -->
+    <a class="wallet-row simple" href="#">
+      <div class="wallet-row-left">
+        <div class="wallet-row-title">Frequently Asked Questions</div>
+      </div>
+      <div class="wallet-row-right">
+        <div class="wallet-row-chevron">›</div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,78 @@
+/* Shipping */
+.ship-wrap{ max-width: 1200px; margin: 0 auto; padding: 20px 0 60px; }
+
+/* Stepper */
+.ship-stepper{
+  display:flex; align-items:center; justify-content:center;
+  gap: 14px; margin: 10px 0 30px;
+}
+.step{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:120px; }
+.dot{
+  width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid #d5d5d5; color:#777; background:#fff;
+}
+.line{ height:2px; width:160px; background:#e6e6e6; }
+.step.active .dot{ border-color:#0b2a3a; color:#0b2a3a; }
+.step.done .dot{ border-color:#0b2a3a; color:#0b2a3a; }
+.line.done{ background:#0b2a3a; }
+.label{ font-size:14px; color:#333; }
+
+/* Body layout */
+.ship-body{ display:grid; grid-template-columns: 1.6fr 1fr; gap: 40px; margin-top: 8px; }
+
+/* Left */
+.ship-left{ padding: 10px 0; }
+.ship-title{ display:flex; gap:14px; align-items:flex-start; margin-bottom: 16px; }
+.ship-title h2{ font-size:22px; margin:0; color:#111; }
+.ship-title p{ margin:6px 0 0; color:#666; font-size:14px; }
+.pin{ font-size:28px; margin-top:2px; }
+
+.add-new{
+  border:none; background:transparent; color:#1769aa; cursor:pointer;
+  font-size:14px; font-weight:600; padding: 8px 0; margin: 10px 0 18px;
+}
+
+/* Address cards */
+.addr-list{ display:flex; flex-direction:column; gap: 14px; }
+.addr-card{
+  display:flex; gap:12px; align-items:flex-start;
+  border:1px solid #e6e6e6; padding:14px; background:#fff;
+}
+.addr-card input{ margin-top:4px; accent-color:#8b6b2f; }
+.addr-card strong{ display:block; margin-bottom:4px; }
+.addr-card .mini{ color:#666; font-size:13px; line-height:1.5; }
+
+.ship-msg{ color:#c00; margin-top: 12px; }
+
+/* Right */
+.ship-right{ position:relative; }
+
+.cash-card{
+  border:1px solid #e6e6e6; background:#f4f8ff;
+  padding:14px; display:flex; gap:12px; align-items:flex-start;
+  margin-bottom: 16px;
+}
+.badge{
+  font-size:11px; font-weight:700; padding:4px 6px;
+  background:#1f4bd8; color:#fff; border-radius:2px;
+  height: fit-content;
+}
+.cash-card .small{ color:#555; font-size:12px; margin-top:4px; }
+.cash-card .know{ color:#1769aa; font-size:13px; text-decoration:none; }
+
+.summary{
+  border:1px solid #e6e6e6; background:#fff; padding:16px;
+}
+.summary h3{ margin:0 0 12px; font-size:18px; }
+.row{ display:flex; justify-content:space-between; padding:6px 0; font-size:14px; }
+.row.muted{ color:#666; }
+.what{ color:#1769aa; text-decoration:none; font-size:12px; margin-left:6px; }
+.divider{ height:1px; background:#eee; margin: 10px 0; }
+.total{ display:flex; justify-content:space-between; font-size:18px; font-weight:700; margin: 8px 0 14px; }
+
+.pay-btn{
+  width:100%; padding:16px 0;
+  background:#c7b48b; border:none; color:#fff; font-weight:700;
+  cursor:pointer; letter-spacing:.5px;
+}

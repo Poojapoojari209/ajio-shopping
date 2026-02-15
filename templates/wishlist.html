@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/wishlist.css' %}">
+
+<div class="ajio-wish-wrap">
+  <h1 class="ajio-wish-title">My Wishlist</h1>
+
+  <div class="ajio-wish-grid" id="wishlistGrid"></div>
+  <p class="ajio-wish-empty" id="wishlistMsg"></p>
+</div>
+
+<!--  SIZE POPUP -->
+<div class="wish-size-overlay" id="wishSizeOverlay"></div>
+
+<div class="wish-size-modal" id="wishSizeModal">
+  <div class="wish-size-head">
+    <div class="wish-size-title">Select Size</div>
+    <button type="button" class="wish-size-close" id="wishSizeClose">✕</button>
+  </div>
+
+  <div class="wish-size-body" id="wishSizeBody">
+    <!-- sizes injected by JS -->
+  </div>
+
+  <button type="button" class="wish-size-add" id="wishSizeAddBtn" disabled>
+    ADD TO BAG
+  </button>
+</div>
+
+<script>
+window.WISHLIST_KEY = window.WISHLIST_KEY || "wishlist_items";
+
+/* ---------- localStorage helpers ---------- */
+function readWishlist() {
+  try {
+    const list = JSON.parse(localStorage.getItem(window.WISHLIST_KEY));
+    return Array.isArray(list) ? list : [];
+  } catch { return []; }
+}
+function saveWishlist(list) {
+  localStorage.setItem(window.WISHLIST_KEY, JSON.stringify(list));
+  if (window.updateWishlistBadge) window.updateWishlistBadge();
+}
+
+
+
+
+function escHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* ---------- render card ---------- */
+function renderWishCard(p) {
+  const id = escHtml(p.id);
+  const img = escHtml(p.image || "{% static 'images/no-image.png' %}");
+  const brand = escHtml((p.brand || "").toUpperCase());
+  const name = escHtml(p.name || "");
+  const price = p.price ? `₹${escHtml(p.price)}` : "";
+
+  // store size if available (optional)
+  const size = escHtml(p.size || "");
+
+  return `
+    <div class="ajio-wish-card" data-id="${id}" data-size="${size}">
+      <a class="ajio-wish-img" href="/detail/${id}/">
+        <img src="${img}" alt="${name}">
+      </a>
+
+      <button type="button" class="ajio-wish-del" title="Remove" data-id="${id}">
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+
+      <!--  left icon click -->
+      <button type="button" class="ajio-wish-move" title="Move to Bag" data-id="${id}">
+        <i class="fa-solid fa-lock"></i>
+      </button>
+
+      <div class="ajio-wish-info">
+        <div class="ajio-wish-brand">${brand}</div>
+        <div class="ajio-wish-name">${name}</div>
+        <div class="ajio-wish-price">${price}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderWishlist() {
+  const grid = document.getElementById("wishlistGrid");
+  const msg  = document.getElementById("wishlistMsg");
+  if (!grid || !msg) return;
+
+  const items = readWishlist();
+  grid.innerHTML = "";
+  msg.textContent = "";
+
+  if (!items.length) {
+    msg.textContent = "Your wishlist is empty";
+    return;
+  }
+
+  grid.innerHTML = items.map(renderWishCard).join("");
+}
+
+/* ---------- modal state ---------- */
+const overlay = document.getElementById("wishSizeOverlay");
+const modal   = document.getElementById("wishSizeModal");
+const bodyEl  = document.getElementById("wishSizeBody");
+const closeBtn= document.getElementById("wishSizeClose");
+const addBtn  = document.getElementById("wishSizeAddBtn");
+
+let pendingProductId = null;
+let selectedSize = null;
+
+function openSizeModal(productId, sizes) {
+  pendingProductId = String(productId);
+  selectedSize = null;
+  addBtn.disabled = true;
+
+  bodyEl.innerHTML = sizes.map(s => `
+    <button type="button" class="wish-size-opt" data-size="${escHtml(s)}">${escHtml(s)}</button>
+  `).join("");
+
+  overlay.classList.add("show");
+  modal.classList.add("show");
+}
+
+function closeSizeModal() {
+  overlay.classList.remove("show");
+  modal.classList.remove("show");
+  pendingProductId = null;
+  selectedSize = null;
+}
+
+overlay.addEventListener("click", closeSizeModal);
+closeBtn.addEventListener("click", closeSizeModal);
+
+bodyEl.addEventListener("click", (e) => {
+  const opt = e.target.closest(".wish-size-opt");
+  if (!opt) return;
+
+  bodyEl.querySelectorAll(".wish-size-opt").forEach(x => x.classList.remove("active"));
+  opt.classList.add("active");
+
+  selectedSize = opt.dataset.size;
+  addBtn.disabled = !selectedSize;
+});
+
+/* ---------- API: load sizes for product ---------- */
+async function fetchProductSizes(productId) {
+  // you already have product detail api:
+  const res = await fetch(`/api/products/${productId}/`);
+  const data = await res.json();
+  let sizes = Array.isArray(data.sizes) ? data.sizes : [];
+
+  // normalize sizes to ["28","30"...]
+  sizes = sizes.map(s => {
+    if (typeof s === "string" || typeof s === "number") return String(s);
+    if (s && typeof s === "object") return String(s.size || s.value || s.label || "");
+    return "";
+  }).filter(Boolean);
+
+  // fallback if empty
+  if (!sizes.length) sizes = ["FREE"];
+  return sizes;
+}
+
+/* ---------- API: add to cart (requires size) ---------- */
+async function addToCartWithSize(productId, size) {
+  const token = localStorage.getItem("access");
+  if (!token) {
+    alert("Please login to add item to cart");
+    return false;
+  }
+
+  // your backend requires: product_id + size
+  const res = await fetch("/api/cart/add/", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      size: size,
+      quantity: 1
+    })
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    alert(data.error || data.detail || "Failed to add to cart");
+    return false;
+  }
+  return true;
+}
+
+/* ---------- click actions ---------- */
+document.addEventListener("click", async (e) => {
+
+  // delete
+  const delBtn = e.target.closest(".ajio-wish-del");
+  if (delBtn) {
+    const id = delBtn.dataset.id;
+    const updated = readWishlist().filter(x => String(x.id) !== String(id));
+    saveWishlist(updated);
+
+    const card = delBtn.closest(".ajio-wish-card");
+    if (card) card.remove();
+
+    const msg = document.getElementById("wishlistMsg");
+    if (msg && readWishlist().length === 0) msg.textContent = "Your wishlist is empty";
+    return;
+  }
+
+  // move to bag (left icon)
+  const moveBtn = e.target.closest(".ajio-wish-move");
+  if (moveBtn) {
+    const productId = moveBtn.dataset.id;
+
+    // check if wishlist already has size stored
+    const items = readWishlist();
+    const item = items.find(x => String(x.id) === String(productId));
+    const savedSize = item?.size;
+
+    if (savedSize && String(savedSize).trim() && savedSize !== "-") {
+      //  directly add to cart
+      const ok = await addToCartWithSize(productId, savedSize);
+      if (!ok) return;
+
+      // remove from wishlist
+      const updated = items.filter(x => String(x.id) !== String(productId));
+      saveWishlist(updated);
+      window.location.href = "/cart/";
+      return;
+    }
+
+    //  no size → open modal and ask size
+    try {
+      const sizes = await fetchProductSizes(productId);
+      openSizeModal(productId, sizes);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load sizes for this product");
+    }
+  }
+});
+
+/* modal add button */
+addBtn.addEventListener("click", async () => {
+  if (!pendingProductId || !selectedSize) return;
+
+  const ok = await addToCartWithSize(pendingProductId, selectedSize);
+  if (!ok) return;
+
+  // also update wishlist item to store size (optional)
+  const items = readWishlist();
+  const updated = items
+    .filter(x => String(x.id) !== String(pendingProductId));
+  saveWishlist(updated);
+
+  closeSizeModal();
+  window.location.href = "/cart/";
+});
+
+document.addEventListener("DOMContentLoaded", renderWishlist);
+</script>
+{% endblock %}

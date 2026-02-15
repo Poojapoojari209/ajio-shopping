@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/shipping.css' %}">
+
+<div class="ship-wrap">
+
+  <!-- Stepper -->
+  <div class="ship-stepper">
+    <div class="step done">
+      <div class="dot"><i class="fa-solid fa-bag-shopping"></i></div>
+      <div class="label">Bag</div>
+    </div>
+
+    <div class="line done"></div>
+
+    <div class="step active">
+      <div class="dot"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="label">Delivery Details</div>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="step">
+      <div class="dot">₹</div>
+      <div class="label">Payment</div>
+    </div>
+  </div>
+
+  <div class="ship-body">
+
+    <!-- LEFT -->
+    <div class="ship-left">
+      <div class="ship-title">
+        <div class="pin"></div>
+        <div>
+          <h2>Delivery Address</h2>
+          <p>We will deliver your order to this address</p>
+        </div>
+      </div>
+
+      <a class="add-new" href="{% url 'account-address_book' %}">
+        Add New Address
+      </a>
+
+      <div class="addr-list">
+        {% if addresses %}
+          {% for address in addresses %}
+          <label class="addr-card">
+            <input
+              type="radio"
+              name="address"
+              value="{{ address.id }}"
+              {% if address.is_default %}checked{% endif %}
+            />
+            <div class="addr-body">
+              <div class="addr-top">
+                <div class="addr-name">
+                  <strong>{{ address.name }}</strong>
+                  <span class="addr-type">{{ address.type }}</span>
+                </div>
+                {% if address.is_default %}
+                  <span class="addr-default">Default</span>
+                {% endif %}
+              </div>
+
+              <div class="addr-lines">
+                <div>{{ address.address_line }}</div>
+                <div>{{ address.city }}, {{ address.state }}</div>
+                <div><strong>India - </strong>{{ address.pincode }}</div>
+              </div>
+
+              <div class="addr-phone">
+                <strong>Phone : </strong>{{ address.mobile }}
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        {% else %}
+          <p class="ship-msg">No addresses found. Please add an address first.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="ship-right">
+      <div class="cash-card">
+        <div class="badge">SUPER CASH</div>
+        <div>
+          <strong>You are earning ₹200 SuperCash!</strong>
+          <div class="small">Amount will be credited after delivery</div>
+          <a class="know" href="#">Know More</a>
+        </div>
+      </div>
+
+      <div class="summary">
+        <h3>Order Details</h3>
+
+        <div class="row">
+          <span>Bag total</span>
+          <span id="bagTotal">₹{{ bag_total|default_if_none:"0" }}</span>
+        </div>
+
+        <div class="row">
+          <span>Bag discount</span>
+          <span id="bagDiscount">-₹{{ bag_discount|default_if_none:"0" }}</span>
+        </div>
+
+        <div class="row">
+          <span>Convenience Fee <a href="#" class="what">What's this?</a></span>
+          <span>₹{{ convenience_fee|default_if_none:"0" }}</span>
+        </div>
+
+        <div class="row muted">
+          <span>Delivery Fee</span>
+          <span>₹{{ delivery_fee|default_if_none:"0" }}</span>
+        </div>
+
+        <div class="row muted">
+          <span>Platform Fee</span>
+          <span>₹{{ platform_fee|default_if_none:"0" }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="total">
+          <span>Order Total</span>
+          <span id="orderTotal">₹{{ order_total|default_if_none:"0" }}</span>
+        </div>
+
+        <!-- IMPORTANT: go to Orders HTML payment page -->
+        <a href="/api/orders/payment-page/" id="proceedPayment" class="pay-btn">
+          PROCEED TO PAYMENT
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let selectedRadio = document.querySelector('input[name="address"]:checked');
+
+  if (!selectedRadio) {
+    const first = document.querySelector('input[name="address"]');
+    if (first) {
+      first.checked = true;
+      selectedRadio = first;
+    }
+  }
+
+  if (selectedRadio) {
+    localStorage.setItem("selected_address_id", selectedRadio.value);
+  }
+
+  document.querySelectorAll('input[name="address"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+      localStorage.setItem("selected_address_id", radio.value);
+      // If user changes address, force new order later
+      localStorage.removeItem("order_id");
+    });
+  });
+
+  const btn = document.getElementById("proceedPayment");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const selected = document.querySelector('input[name="address"]:checked');
+      if (selected) localStorage.setItem("selected_address_id", selected.value);
+    });
+  }
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("access");
+
+  // isTokenValid() exists in your main.js
+  if (!token || (typeof isTokenValid === "function" && !isTokenValid(token))) {
+    alert("Please login to continue");
+    if (typeof openLogin === "function") openLogin();
+    window.location.href = "/cart/";
+  }
+});
+
+</script>
+
+{% endblock %}

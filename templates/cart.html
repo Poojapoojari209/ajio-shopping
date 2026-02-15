@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="cart-container">
+
+  <!-- Stepper -->
+  <div class="pay-stepper">
+    <div class="step active"><div class="cartdot"> <i class="fa-solid fa-bag-shopping"></i></div><div class="label">Bag</div></div>
+    <div class="line"></div>
+
+    <div class="step">
+      <div class="cartdot"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="label">Delivery Details</div>
+    </div>
+
+    <div class="line"></div>
+    <div class="step"><div class="cartdot">₹</div><div class="label">Payment</div></div>
+  </div>
+
+<div class="ajio-cares" id="ajioCaresBar">
+  AJIO will never ask for OTPs or payments via unofficial links.
+</div>
+
+  <div class="cart-body">
+
+    <!-- LEFT -->
+    <div class="cart-left">
+      <h2 class="bag-title" id="bagHeading">My Bag</h2>
+
+      <div id="cartItems">
+        <!-- JS injects cart items -->
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="cart-right">
+      <h3>Order Details</h3>
+
+      <div class="summary-row">
+        <span>Bag Total</span>
+        <span id="bagTotal">₹0</span>
+      </div>
+
+      <div class="summary-row">
+        <span>Bag Discount</span>
+        <span id="bagDiscount">₹0</span>
+      </div>
+
+      <div class="summary-row">
+        <span>Platform Fee</span>
+        <span>₹29</span>
+      </div>
+
+      <hr>
+
+      <div class="summary-total">
+        <span>Order Total</span>
+        <span id="orderTotal">₹0</span>
+      </div>
+
+      <a href="{% url 'checkout_page' %}" class="checkout-btn" id="proceedToShipping">
+        PROCEED TO SHIPPING
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script src="{% static 'js/cart.js' %}"></script>
+{% endblock %}

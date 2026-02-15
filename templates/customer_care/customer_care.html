@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="cc-wrap">
+
+  <div class="cc-hero">
+    <h2>Need help with your recent orders?</h2>
+
+    {% if not is_logged_in %}
+      <button class="cc-login-btn" onclick="openLogin()">LOGIN</button>
+    {% else %}
+      <div class="cc-order-box">
+        <div class="cc-order-title">Select Your Order</div>
+
+        <div class="cc-order-strip">
+          <button class="cc-arrow" id="ccPrev">‹</button>
+
+          <div class="cc-order-track" id="ccOrderTrack">
+            <div class="cc-empty">Loading...</div>
+          </div>
+
+          <button class="cc-arrow" id="ccNext">›</button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="cc-faq">
+    <h3>Frequently Asked Questions</h3>
+
+    <div class="cc-search">
+      <input type="text" placeholder="Search for topics or questions" />
+      <button>SEARCH</button>
+    </div>
+
+    <div class="cc-grid">
+      <div class="cc-col">
+        <div class="cc-col-head">Step 1: Select Topic</div>
+        <div class="cc-item">Shipping FAQs</div>
+        <div class="cc-item">Cancellation FAQs</div>
+        <div class="cc-item">Payment FAQs</div>
+        <div class="cc-item">Returns FAQs</div>
+      </div>
+
+      <div class="cc-col">
+        <div class="cc-col-head">Step 2: Select Issue</div>
+        <div class="cc-item">How long will the delivery take?</div>
+        <div class="cc-item">How can I track my order?</div>
+        <div class="cc-item">Will all the products be shipped out together?</div>
+        <div class="cc-item">How much will the shipping cost me?</div>
+      </div>
+
+      <div class="cc-col">
+        <div class="cc-col-head">Step 3: Get assistance</div>
+        <div class="cc-helpbox">Select an issue to view guidance.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% if is_logged_in %}
+<script>
+(async function loadCustomerCareOrders(){
+  const track = document.getElementById("ccOrderTrack");
+  if(!track) return;
+
+  try{
+    const res = await fetch("/api/customer-care/orders/", { credentials: "include" });
+    const data = await res.json();
+
+    if(!Array.isArray(data) || data.length === 0){
+      track.innerHTML = `<div class="cc-empty">No orders found</div>`;
+      return;
+    }
+
+    track.innerHTML = data.map(o => {
+      const thumbs = (o.products || []).map(p =>
+        `<img class="cc-thumb" src="${p.image || '/static/images/no-image.png'}" alt="">`
+      ).join("");
+
+      return `
+        <div class="cc-card">
+          <div class="cc-card-top">
+            <div class="cc-oid">${o.order_id}</div>
+            <div class="cc-status">${o.status}</div>
+          </div>
+          <div class="cc-thumbs">${thumbs}</div>
+        </div>
+      `;
+    }).join("");
+
+    // simple scroll arrows
+    document.getElementById("ccPrev").onclick = () => track.scrollBy({ left: -360, behavior: "smooth" });
+    document.getElementById("ccNext").onclick = () => track.scrollBy({ left:  360, behavior: "smooth" });
+
+  } catch(e){
+    track.innerHTML = `<div class="cc-empty">Unable to load orders</div>`;
+  }
+})();
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<script>
+  window.PRODUCT_ID = "{{ product.id }}";
+</script>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  Home / {{ product.category.gender.name }} / {{ product.category.name }} / {{ product.name }}
+</div>
+
+<div class="pdp-container">
+
+  <!-- LEFT: IMAGES -->
+  <div class="pdp-left">
+
+    <!--  DEFAULT = ORIGINAL product images (ProductImage) -->
+    <div class="thumbnail-column" id="thumbs">
+      {% for image in product.images.all %}
+      <img class="thumb" src="{{ image.image.url }}" alt="{{ product.name }}">
+      {% empty %}
+      <img class="thumb" src="{% static 'images/no-image.png' %}" alt="No image">
+      {% endfor %}
+    </div>
+
+    <!--  DEFAULT MAIN IMAGE = original product image -->
+    <div class="main-image">
+      {% if product.images.first %}
+      <img id="mainImage" src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+      {% else %}
+      <img id="mainImage" src="{% static 'images/no-image.png' %}" alt="No image">
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- RIGHT: PRODUCT INFO -->
+  <div class="pdp-right">
+
+    <h5 class="brand">{{ product.brand.name }}</h5>
+    <h2 class="product-title">{{ product.name }}</h2>
+
+    <!-- Price -->
+    <div class="price-box">
+      {% if product.discount_price %}
+      <span class="mrp" id="mrpPrice">MRP ₹{{ product.price }}</span>
+      <span class="offer" id="finalPrice">₹{{ product.discount_price }}</span>
+      {% else %}
+      <span class="offer" id="finalPrice">₹{{ product.price }}</span>
+      {% endif %}
+    </div>
+
+    <p class="tax">Price inclusive of all taxes</p>
+
+    <!-- Color section -->
+    <div class="color-section">
+      <div class="color-label">
+        <span>Color:</span> <b id="colorName">{{ product.color_name|default:"-" }}</b>
+        <a href="javascript:void(0)" id="moreColors" style="display:none;">+ More</a>
+      </div>
+
+      <div class="color-swatches" id="colorSwatches"></div>
+    </div>
+
+
+
+    <!-- SIZE -->
+    <div class="sizes">
+      <p>Select Size</p>
+
+      <div class="size-box" id="sizeBox">
+        {% for s in ordered_sizes %}
+        {% if s.stock > 0 %}
+        <button type="button" class="size-btn" data-size="{{ s.size }}">
+          {{ s.size }}
+        </button>
+        {% else %}
+        <button type="button" class="size-btn disabled" disabled>
+          {{ s.size }}
+        </button>
+        {% endif %}
+        {% empty %}
+        <p style="color:red;">No sizes available.</p>
+        {% endfor %}
+      </div>
+
+      <p id="sizeError" style="color:red; display:none; margin-top:6px;">
+        Please select a size
+      </p>
+    </div>
+
+    
+
+      <!-- PINCODE (AJIO STYLE - NO CHECK BUTTON) -->
+      <div class="ajio-pin-wrap" id="pinWrap">
+
+        <!-- Hint -->
+        <div class="ajio-pin-hint" id="pinHint">
+          <span class="pin-icon"><i class="fa-solid fa-location-dot"></i></span>
+          <span>Select your size to know your estimated delivery date.</span>
+        </div>
+
+        <!-- PIN input row (NO BUTTON) -->
+        <div class="ajio-pin-row">
+          <input id="pincodeInput" maxlength="6" placeholder="Enter PIN code" value="{{ default_pin }}" />
+        </div>
+
+        <!-- Beige card -->
+        <div class="ajio-pin-card" id="pinCard" style="display:none;">
+          <div class="pin-top">
+            <div class="pin-code" id="pinCardCode">—</div>
+            <button type="button" class="pin-change" id="changePinBtn">Change Pincode</button>
+          </div>
+
+          <div class="pin-line" id="pinDeliveryLine">Expected Delivery: —</div>
+          <div class="pin-line" id="pinCodLine">Cash on Delivery —</div>
+
+          <div class="pin-note">
+            The final delivery date will depend on the items in your bag
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div class="ajio-pin-error" id="pinError" style="display:none;"></div>
+
+      </div>
+
+
+      <!-- ADD TO BAG -->
+      <button class="add-to-bag" data-id="{{ product.id }}">ADD TO BAG</button>
+
+
+      <!-- WISHLIST -->
+      <button type="button" class="wish-btn" id="wishBtn" data-id="{{ product.id }}"
+        data-name="{{ product.name|escapejs }}" data-brand="{{ product.brand.name|escapejs }}"
+        data-price="{% if product.discount_price %}{{ product.discount_price }}{% else %}{{ product.price }}{% endif %}"
+        data-image="{% if product.images.first %}{{ product.images.first.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}">
+        <i class="fa-regular fa-heart" id="wishIcon"></i>
+        <span id="wishText">SAVE TO WISHLIST</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- similar products -->
+  {% if similar_products %}
+<section class="ajio-similar">
+
+  <!-- title with lines (AJIO) -->
+  <div class="ajio-sim-title">
+    <span class="ajio-sim-line"></span>
+    <h3>Similar Styles</h3>
+    <span class="ajio-sim-line"></span>
+  </div>
+
+  <!-- arrows outside cards (AJIO) -->
+  <button class="ajio-sim-arrow left" id="simPrev" type="button" aria-label="Previous">‹</button>
+  <button class="ajio-sim-arrow right" id="simNext" type="button" aria-label="Next">›</button>
+
+  <!-- viewport + track -->
+  <div class="ajio-sim-viewport" id="similarViewport">
+    <div class="ajio-sim-track" id="similarTrack">
+      {% for p in similar_products %}
+      <a class="ajio-sim-card" href="{% url 'product_detail' p.id %}">
+        <div class="ajio-sim-img">
+          {% if p.images.first %}
+            <img src="{{ p.images.first.image.url }}" alt="{{ p.name }}">
+          {% else %}
+            <img src="{% static 'images/no-image.png' %}" alt="No image">
+          {% endif %}
+        </div>
+
+        <div class="ajio-sim-brand">{{ p.brand.name|upper }}</div>
+        <div class="ajio-sim-name">{{ p.name }}</div>
+
+        <div class="ajio-sim-price">
+          {% if p.discount_price and p.discount_price > 0 %}
+            <span class="offer">₹{{ p.discount_price }}</span>
+            <span class="mrp">₹{{ p.price }}</span>
+          {% else %}
+            <span class="offer">₹{{ p.price }}</span>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</section>
+{% endif %}
+
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+
+      /* =========================================================
+         1) SIZE SELECT + ADD TO BAG
+      ========================================================= */
+      window.selectedSize = null;
+
+      const sizeError = document.getElementById("sizeError");
+      const addBtn = document.querySelector(".add-to-bag");
+
+      document.querySelectorAll(".size-btn:not(.disabled)").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          window.selectedSize = btn.dataset.size;
+          if (sizeError) sizeError.style.display = "none";
+
+          // auto open delivery card if pincode exists
+          onSizeSelectedAJIO();
+        });
+      });
+
+      addBtn?.addEventListener("click", function () {
+        const productId = this.dataset.id;
+
+        if (!window.selectedSize) {
+          if (sizeError) sizeError.style.display = "block";
+          return;
+        }
+
+        if (window.addToCartCommon) {
+          window.addToCartCommon({
+            productId: productId,
+            size: selectedSize,
+            quantity: 1,
+            redirectToCart: true
+          });
+        } else {
+          alert("addToCartCommon not found. Check main.js is loaded in base.html");
+        }
+      });
+
+
+      /* =========================================================
+         2) AJIO-STYLE IMAGES + COLOR VARIANTS (FULL FIX)
+      ========================================================= */
+      const thumbsEl = document.getElementById("thumbs");
+      const mainImgEl = document.getElementById("mainImage");
+      const productId = window.PRODUCT_ID || addBtn?.dataset.id;
+
+      const colorNameEl = document.getElementById("colorName");
+      const swatchesEl = document.getElementById("colorSwatches");
+      const moreColors = document.getElementById("moreColors");
+
+      let baseImages = [];
+      let currentImages = [];
+
+      function setActiveThumb(idx) {
+        thumbsEl?.querySelectorAll(".thumb").forEach((t, i) => {
+          t.classList.toggle("active", i === idx);
+        });
+      }
+
+      function renderThumbs(images) {
+        if (!thumbsEl || !mainImgEl) return;
+
+        thumbsEl.innerHTML = "";
+
+        if (!images || !images.length) {
+          const fallback = "{% static 'images/no-image.png' %}";
+          thumbsEl.innerHTML = `<img class="thumb active" src="${fallback}" alt="No image">`;
+          mainImgEl.src = fallback;
+          return;
+        }
+
+        images.forEach((url, idx) => {
+          const img = document.createElement("img");
+          img.src = url;
+          img.className = "thumb" + (idx === 0 ? " active" : "");
+          img.alt = "{{ product.name|escapejs }}";
+
+          img.addEventListener("click", () => {
+            mainImgEl.src = url;
+            setActiveThumb(idx);
+          });
+
+          thumbsEl.appendChild(img);
+        });
+
+        mainImgEl.src = images[0];
+      }
+
+      function showBaseImages() {
+        currentImages = baseImages.slice();
+        renderThumbs(currentImages);
+        if (colorNameEl) colorNameEl.innerText = "{{ product.color_name|default:'-' }}";
+      }
+
+      function showVariantImages(variant) {
+        const imgs = (variant.images || []).filter(Boolean);
+        currentImages = imgs.slice();
+        renderThumbs(currentImages);
+        if (colorNameEl) colorNameEl.innerText = variant.color?.name || "-";
+      }
+
+      // Load from API & build swatches
+      if (productId && thumbsEl && mainImgEl && swatchesEl) {
+        try {
+          const res = await fetch(`/api/products/${productId}/`);
+          const data = await res.json();
+
+          // Base images from API (NOT DOM)
+          baseImages = (data.images || []).filter(Boolean);
+
+          // Default show base
+          showBaseImages();
+
+          // Build swatches
+          const variants = data.variants || [];
+          swatchesEl.innerHTML = "";
+
+          // Original swatch
+          const originalBtn = document.createElement("button");
+          originalBtn.type = "button";
+          originalBtn.className = "swatch active";
+          originalBtn.title = "Original";
+          originalBtn.style.background = data.base_color?.hex_code || "#f0f0f0";
+
+          originalBtn.addEventListener("click", () => {
+            swatchesEl.querySelectorAll(".swatch").forEach(x => x.classList.remove("active"));
+            originalBtn.classList.add("active");
+            showBaseImages();
+          });
+          swatchesEl.appendChild(originalBtn);
+
+          // AJIO: show 3 swatches then +More
+          const maxVisible = 3;
+          const extra = [];
+
+          variants.forEach((v, idx) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "swatch";
+            b.title = v.color?.name || "";
+            b.style.background = v.color?.hex_code || "#ccc";
+
+            b.addEventListener("click", () => {
+              swatchesEl.querySelectorAll(".swatch").forEach(x => x.classList.remove("active"));
+              b.classList.add("active");
+              showVariantImages(v);
+            });
+
+            if (idx < maxVisible) swatchesEl.appendChild(b);
+            else extra.push(b);
+          });
+
+          // + More link
+          if (moreColors) {
+            if (extra.length) {
+              moreColors.style.display = "inline";
+              moreColors.onclick = () => {
+                extra.forEach(btn => swatchesEl.appendChild(btn));
+                moreColors.style.display = "none";
+              };
+            } else {
+              moreColors.style.display = "none";
+            }
+          }
+
+        } catch (err) {
+          console.error("AJIO image/variant load error:", err);
+        }
+      }
+
+
+      
+      /* =========================================================
+         4) PINCODE CHECK (YOUR CODE - CLEANED)
+      ========================================================= */
+      const pinInput = document.getElementById("pincodeInput");
+      const pinHint = document.getElementById("pinHint");
+
+      const pinCard = document.getElementById("pinCard");
+      const pinCardCode = document.getElementById("pinCardCode");
+      const pinDeliveryLine = document.getElementById("pinDeliveryLine");
+      const pinCodLine = document.getElementById("pinCodLine");
+      const pinError = document.getElementById("pinError");
+      const changePinBtn = document.getElementById("changePinBtn");
+
+      const currentProductId = window.PRODUCT_ID;
+
+      function showError(msg) {
+        if (pinError) {
+          pinError.style.display = "block";
+          pinError.innerText = msg;
+        }
+        if (pinCard) pinCard.style.display = "none";
+      }
+
+      function clearError() {
+        if (pinError) {
+          pinError.style.display = "none";
+          pinError.innerText = "";
+        }
+      }
+
+      function fmtDate(d) {
+        return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+      }
+
+      function addDays(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + Number(days || 0));
+        return d;
+      }
+
+      async function checkPincodeAndShowCard() {
+        if (!pinInput || !currentProductId) return;
+
+        const pin = (pinInput.value || "").trim();
+
+        if (pin.length !== 6 || isNaN(pin)) {
+          showError("Enter valid 6 digit pincode");
+          return;
+        }
+
+        clearError();
+
+        try {
+          const url = `/api/check-product-pincode/?product_id=${currentProductId}&pincode=${encodeURIComponent(pin)}`;
+          const res = await fetch(url);
+
+          const text = await res.text();
+          let data = {};
+          try { data = JSON.parse(text); } catch (e) { }
+
+          if (!res.ok) {
+            showError(data.error || `API error (${res.status})`);
+            return;
+          }
+
+          if (!data.success) {
+            showError(data.error || "Something went wrong");
+            return;
+          }
+
+          if (!data.deliverable) {
+            showError(data.message || "Not deliverable to this pincode");
+            return;
+          }
+
+          if (!data.product_available) {
+            showError(data.message || "Product not available in your location");
+            return;
+          }
+
+          localStorage.setItem("pincode", pin);
+
+          if (pinHint) pinHint.style.display = "none";
+          if (pinCard) pinCard.style.display = "block";
+
+          if (pinCardCode) pinCardCode.innerText = data.pincode || pin;
+
+          const expected = fmtDate(addDays(data.eta_days ?? 0));
+          if (pinDeliveryLine) pinDeliveryLine.innerText = `Expected Delivery: ${expected}`;
+          if (pinCodLine) pinCodLine.innerText = `Cash on Delivery ${data.cod_available ? "Available" : "Not available"}`;
+
+        } catch (err) {
+          console.error("PINCODE CHECK ERROR:", err);
+          showError("Server error while checking pincode");
+        }
+      }
+
+      // If default pin not available, load from localStorage
+      if (pinInput && !pinInput.value) {
+        const saved = localStorage.getItem("pincode");
+        if (saved) pinInput.value = saved;
+      }
+
+      // Change pincode button
+      if (changePinBtn && pinInput) {
+        changePinBtn.addEventListener("click", () => {
+          if (pinCard) pinCard.style.display = "none";
+          if (pinHint) pinHint.style.display = "block";
+          pinInput.focus();
+          pinInput.select();
+        });
+      }
+
+      // Auto-check when user types full 6 digits
+      let typingTimer;
+      pinInput?.addEventListener("input", () => {
+        clearTimeout(typingTimer);
+        const v = (pinInput.value || "").trim();
+        if (v.length === 6) {
+          typingTimer = setTimeout(checkPincodeAndShowCard, 250);
+        }
+      });
+
+      // Called from size selection
+      window.onSizeSelectedAJIO = function () {
+        if (pinHint) pinHint.style.display = "none";
+        const v = (pinInput?.value || "").trim();
+        if (v.length === 6) {
+          checkPincodeAndShowCard();
+        } else {
+          if (pinHint) pinHint.style.display = "block";
+          if (pinCard) pinCard.style.display = "none";
+        }
+      };
+
+
+
+      /* =========================================================
+         5) SIMILAR PRODUCT ARROWS (ONLY ONCE)
+      ========================================================= */
+     const track = document.getElementById("similarTrack");
+  const prev  = document.getElementById("simPrev");
+  const next  = document.getElementById("simNext");
+  const viewport = document.getElementById("similarViewport");
+
+  if (!track || !prev || !next || !viewport) return;
+
+  let index = 0;
+
+  function getGapPx() {
+    // read real gap from CSS (works even if you change it)
+    const styles = window.getComputedStyle(track);
+    const gap = styles.columnGap || styles.gap || "0px";
+    return parseFloat(gap) || 0;
+  }
+
+  function getCardWidth() {
+    const card = track.querySelector(".ajio-sim-card");
+    if (!card) return 0;
+    return card.getBoundingClientRect().width;
+  }
+
+  function getStep() {
+    return getCardWidth() + getGapPx();
+  }
+
+  function getMaxIndex() {
+    const step = getStep();
+    if (!step) return 0;
+    const totalCards = track.querySelectorAll(".ajio-sim-card").length;
+    const visibleWidth = viewport.getBoundingClientRect().width;
+    const trackWidth = totalCards * step - getGapPx();
+    const maxScroll = Math.max(0, trackWidth - visibleWidth);
+    return Math.floor(maxScroll / step);
+  }
+
+  function apply() {
+    const step = getStep();
+    const max = getMaxIndex();
+
+    if (index > max) index = max;
+    if (index < 0) index = 0;
+
+    track.style.transform = `translateX(${-index * step}px)`;
+
+    prev.disabled = index <= 0;
+    next.disabled = index >= max;
+
+    prev.style.opacity = prev.disabled ? "0.35" : "1";
+    next.style.opacity = next.disabled ? "0.35" : "1";
+  }
+
+  prev.addEventListener("click", () => {
+    index -= 1;
+    apply();
+  });
+
+  next.addEventListener("click", () => {
+    index += 1;
+    apply();
+  });
+
+  window.addEventListener("resize", apply);
+  apply();
+
+    });
+  </script>
+
+
+
+  {% endblock %}

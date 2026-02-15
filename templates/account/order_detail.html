@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+
+<div class="ajio-od-page" data-order-id="{{ order_id }}">
+  <a class="ajio-od-back" href="/account/orders/">← Back to Orders</a>
+
+  <div class="ajio-od-grid">
+    <!-- LEFT MAIN -->
+    <div class="ajio-od-left">
+      <div class="ajio-od-card">
+
+        <!-- STATUS HEADER -->
+        <div class="ajio-od-status-row" id="odStatusRow"></div>
+
+        <!-- ITEM BOX -->
+        <div class="ajio-od-itembox" id="odItems"></div>
+
+        <!-- OPTIONAL: Banner like AJIO -->
+        <div class="ajio-od-banner">
+          <div class="ajio-od-banner-left">
+            <span class="ajio-od-banner-badge">AJIO</span>
+            <span>Check your SuperCash earnings</span>
+          </div>
+          <a class="ajio-od-banner-link" href="javascript:void(0)">Details</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="ajio-od-right">
+      <div class="ajio-od-sidecard ajio-od-sidehead" id="odSideHead"></div>
+      <div class="ajio-od-sidecard" id="payBox"></div>
+      <div class="ajio-od-sidecard" id="addrBox"></div>
+    </div>
+  </div>
+
+  <p id="odMsg" class="od-msg"></p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  loadAjioOrderDetail();
+
+  // cancel click
+  document.addEventListener("click", (e) => {
+    const cancelLink = e.target.closest("[data-cancel-order]");
+    if (!cancelLink) return;
+    cancelOrder(cancelLink.dataset.cancelOrder);
+  });
+
+  // rating click
+  document.addEventListener("click", (e) => {
+    const star = e.target.closest(".od-star");
+    if (!star) return;
+
+    const box = star.closest(".od-rating");
+    if (!box) return;
+
+    const rating = parseInt(star.dataset.value, 10);
+    submitDetailRating(box, rating);
+  });
+});
+
+function statusText(st){
+  st = String(st||"").toUpperCase();
+  if(st==="CONFIRMED") return "Confirmed";
+  if(st==="PENDING") return "Pending";
+  if(st==="DELIVERED") return "Delivered";
+  if(st==="CANCELLED") return "Cancelled";
+  if(st==="FAILED") return "Failed";
+  return st || "Pending";
+}
+
+function formatDateLong(dt){
+  const d = new Date(dt);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+}
+function formatDateShort(dt){
+  const d = new Date(dt); // works for "YYYY-MM-DD"
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-IN", { day:"2-digit", month:"short" });
+}
+
+function starsStatic(r){
+  r = Number(r || 0);
+  r = Math.max(0, Math.min(5, r));
+  return "★".repeat(r) + "☆".repeat(5-r);
+}
+function starsInteractive(){
+  return [1,2,3,4,5].map(n => `<span class="od-star" data-value="${n}">☆</span>`).join(" ");
+}
+
+async function loadAjioOrderDetail(){
+  const token = localStorage.getItem("access");
+  const page = document.querySelector(".ajio-od-page");
+  const orderId = page?.dataset.orderId;
+
+  const msg = document.getElementById("odMsg");
+  const statusRow = document.getElementById("odStatusRow");
+  const itemsBox = document.getElementById("odItems");
+  const sideHead = document.getElementById("odSideHead");
+  const payBox = document.getElementById("payBox");
+  const addrBox = document.getElementById("addrBox");
+
+  msg.textContent = "";
+  statusRow.innerHTML = "";
+  itemsBox.innerHTML = "";
+  sideHead.innerHTML = "";
+  payBox.innerHTML = "";
+  addrBox.innerHTML = "";
+
+  if(!token){
+    msg.textContent = "Please login.";
+    return;
+  }
+
+  const res = await fetch(`/api/orders/detail/${orderId}/`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  const order = await res.json().catch(()=>({}));
+  if(!res.ok){
+    msg.textContent = order.error || "Order not found.";
+    console.error(order);
+    return;
+  }
+
+  const st = (order.status || "PENDING").toUpperCase();
+  const canCancel = !!order.can_cancel;
+
+  const orderNo = order.order_no || ("FN" + String(order.id).padStart(10, "0"));
+  const createdAt = order.created_at || new Date().toISOString();
+
+  // ✅ IMPORTANT: backend should send these
+  const estimatedDelivery = order.estimated_delivery || null; // YYYY-MM-DD
+  const deliveredOn = order.delivered_on || null;            // YYYY-MM-DD (or null)
+
+  // STATUS HEADER
+  statusRow.innerHTML = `
+    <div class="ajio-od-status-left">
+      <span class="ajio-od-status-icon">${st === "CANCELLED" ? "✖" : "✔"}</span>
+      <span class="ajio-od-status-text">${order.status_label || statusText(st)}</span>
+    </div>
+  `;
+
+  // ITEMS (you can later loop all items, for now showing first like your current design)
+  const firstItem = (order.items || [])[0];
+
+  if(!firstItem){
+    itemsBox.innerHTML = `<div class="ajio-od-empty">No items found.</div>`;
+  } else {
+    const img = firstItem.product_image || "/static/images/no-image.png";
+
+    const isDelivered = st === "DELIVERED";
+    const ratingValue = Number(firstItem.rating_value || 0);
+    const isRated = ratingValue > 0;
+
+    let ratingHtml = "";
+    if (isDelivered) {
+      ratingHtml = isRated
+        ? `<div class="od-rated">You Rated <span class="od-stars-static">${starsStatic(ratingValue)}</span></div>`
+        : `
+          <div class="od-rating" data-order-item-id="${firstItem.id}">
+            <span class="od-rate-label"><b>Rate this Product</b></span>
+            <span class="od-stars">${starsInteractive()}</span>
+            <span class="od-rate-msg"></span>
+          </div>
+        `;
+    }
+
+    // ✅ show ONLY one date line depending on status
+    let dateLine = "";
+    if ((st === "CONFIRMED" || st === "PENDING") && estimatedDelivery) {
+      dateLine = `<div class="ajio-od-est">Estimated Delivery : <b>${formatDateShort(estimatedDelivery)}</b></div>`;
+    } else if (st === "DELIVERED" && deliveredOn) {
+      dateLine = `<div class="ajio-od-est">Delivered on : <b>${formatDateLong(deliveredOn)}</b></div>`;
+    }
+
+    itemsBox.innerHTML = `
+      <div class="ajio-od-itemrow">
+        <div class="ajio-od-thumb">
+          <img src="${img}" alt="" onerror="this.src='/static/images/no-image.png'">
+        </div>
+
+        <div class="ajio-od-iteminfo">
+          <div class="ajio-od-name">${firstItem.product_name || ""}</div>
+
+          <div class="ajio-od-price">
+            ₹${Number(firstItem.price||0).toFixed(2)}
+            <span class="muted">(Includes Convenience Fee)</span>
+          </div>
+
+          ${firstItem.size ? `<div class="ajio-od-size">Size <b>${firstItem.size}</b></div>` : ``}
+          <div class="muted">Qty: <b>${firstItem.quantity || 1}</b></div>
+
+          ${dateLine}
+
+          ${ratingHtml}
+        </div>
+
+        <div class="ajio-od-actions">
+          ${canCancel ? `<a href="javascript:void(0)" class="ajio-od-cancel" data-cancel-order="${order.id}">Cancel Item</a>` : ``}
+        </div>
+      </div>
+    `;
+  }
+
+  // RIGHT SIDEBAR HEADER
+  const itemCount = (order.items || []).length || 1;
+  sideHead.innerHTML = `
+    <div class="ajio-od-sidehead-top">
+      <div><b>Order# ${orderNo}</b> (${itemCount} Item${itemCount>1?"s":""})</div>
+      <div class="muted">Order placed on ${formatDateLong(createdAt)}</div>
+    </div>
+  `;
+
+  // PAYMENT
+  const total = Number(order.total_amount || 0);
+  const savings = Number(order.order_savings || 0);
+  const convenience = Number(order.convenience_fee || 0);
+
+  payBox.innerHTML = `
+    <h3 class="ajio-od-title">Order Payment Details</h3>
+
+    <div class="ajio-od-kv"><span>Order Amount</span><span>₹${total.toFixed(2)}</span></div>
+    <div class="ajio-od-kv"><span>Order Savings</span><span>₹${savings.toFixed(2)}</span></div>
+    <div class="ajio-od-kv"><span>Convenience Fee</span><span>₹${convenience.toFixed(2)}</span></div>
+
+    <div class="ajio-od-kv ajio-od-total"><span>Order Total</span><span>₹${total.toFixed(2)}</span></div>
+
+    <div class="ajio-od-subtitle">Payment Mode</div>
+    <div class="ajio-od-mode">
+      <span class="dot"></span>
+      <span>${order.payment_mode || "Cash On Delivery"}</span>
+      <span class="right">₹${total.toFixed(2)}</span>
+    </div>
+  `;
+
+  // ADDRESS
+  const a = order.address;
+  addrBox.innerHTML = a ? `
+    <h3 class="ajio-od-title">Deliver to</h3>
+    <div class="ajio-od-addrname"><b>${a.name || ""}</b> <span class="tag">${a.type || "OTHER"}</span></div>
+    <div class="ajio-od-addrtext">
+      ${a.address_line || ""}${a.landmark ? ", " + a.landmark : ""}<br>
+      ${a.area ? a.area + ", " : ""}${a.city || ""}<br>
+      ${a.state || ""} - ${a.pincode || ""}<br>
+      Phone : <b>${a.mobile || ""}</b>
+    </div>
+  ` : `
+    <h3 class="ajio-od-title">Deliver to</h3>
+    <div class="ajio-od-addrtext">Address not available</div>
+  `;
+}
+
+async function cancelOrder(orderId){
+  const token = localStorage.getItem("access");
+  if(!token){ alert("Please login"); return; }
+
+  const ok = confirm("Cancel this item?");
+  if(!ok) return;
+
+  const reason = prompt("Reason (optional):") || "";
+
+  const res = await fetch(`/api/orders/cancel/${orderId}/`, {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer " + token
+    },
+    body: JSON.stringify({reason})
+  });
+
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok){
+    alert(data.error || "Cancel failed");
+    return;
+  }
+
+  alert("Cancelled successfully");
+  loadAjioOrderDetail();
+}
+
+async function submitDetailRating(box, rating){
+  const token = localStorage.getItem("access");
+  const orderItemId = box.dataset.orderItemId;
+  const msgEl = box.querySelector(".od-rate-msg");
+  if (msgEl) msgEl.textContent = "Saving...";
+
+  try {
+    const res = await fetch("/api/orders/review/submit/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ order_item_id: orderItemId, rating: rating, comment: "" })
+    });
+
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok) {
+      if (msgEl) msgEl.textContent = data.error || "Failed";
+      return;
+    }
+
+    box.outerHTML = `<div class="od-rated">You Rated <span class="od-stars-static">${starsStatic(rating)}</span></div>`;
+  } catch (e) {
+    console.error(e);
+    if (msgEl) msgEl.textContent = "Network error";
+  }
+}
+</script>
+
+{% endblock %}

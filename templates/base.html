@@ -1,0 +1,702 @@
+ {% load static %}
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AJIO</title>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Mega dropdown CSS -->
+     <link rel="stylesheet" href="{% static 'css/mega-menu.css' %}">
+
+</head>
+<body> 
+
+<!-- TOP UTILITY BAR -->
+<div class="ajio-topbar">
+    <div></div>
+    <div class="topbar-right">
+        <a href="javascript:void(0)" onclick="openLogin()">Sign In / Join AJIO</a>
+        
+        <a href="/customer-care/" class="nav-link">Customer Care</a>
+        <button class="luxe-btn">Visit AJIOLUXE</button>
+    </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+
+    <!-- top row -->
+    <div class="modal-topbar">
+      <a href="javascript:void(0)" id="loginBackBtn" class="modal-back" style="display:none;" onclick="loginBack()">&#x2039; Back</a>
+      <span class="close-btn" onclick="closeLogin()">✕</span>
+    </div>
+
+    <!-- STEP 1: MOBILE ONLY -->
+    <div id="mobileStep">
+      <h2>Welcome to AJIO</h2>
+      <label>Enter Mobile Number *</label>
+      <input type="text" id="mobileInput" placeholder="Mobile Number" maxlength="10">
+      <button class="continue-btn" onclick="continueLogin()">CONTINUE</button>
+
+      <p class="terms">
+        By Signing In, I agree to
+        <a href="#">Terms & Conditions</a> and
+        <a href="#">Privacy Policy</a>
+      </p>
+    </div>
+
+    <!-- STEP 2 (NEW USER): SETUP ACCOUNT -->
+    <div id="signupStep" class="hidden">
+      <h2>Welcome to AJIO</h2>
+      <p>Please set up your account</p>
+
+      <div class="setup-mobile-row">
+        <div>
+          <div id="setupMobileText" class="setup-mobile"></div>
+          <div class="setup-sub">OTP will be sent to your number for verification.</div>
+        </div>
+        <a href="javascript:void(0)" class="change-link" onclick="editMobile()">Edit</a>
+      </div>
+
+      <div class="setup-gender">
+        <span>Gender:</span>
+        <label><input type="radio" name="setupGender" value="Female"> Female</label>
+        <label><input type="radio" name="setupGender" value="Male"> Male</label>
+      </div>
+
+      <input type="text" id="setupName" placeholder="Name">
+      <input type="email" id="setupEmail" placeholder="Email">
+      <input type="text" id="setupInvite" placeholder="Invite code (optional)">
+
+      <label class="setup-terms">
+        <input type="checkbox" id="setupAgree">
+        By Signing Up, I agree to <a href="#">Terms and Conditions</a>.
+      </label>
+
+      <button class="continue-btn" onclick="sendOtpFromSetup()">SEND OTP</button>
+    </div>
+
+    <!-- STEP 3: OTP -->
+    <div id="otpStep" class="hidden">
+      <h2>Number Verification</h2>
+      <p>Please enter OTP sent to</p>
+      <b id="showMobile"></b>
+
+      <input type="text" id="otpInput" placeholder="Enter OTP" maxlength="6">
+
+      <div class="otp-row">
+        <button class="start-shopping-btn" id="startShoppingBtn" onclick="startShopping()" disabled>
+          START SHOPPING
+        </button>
+
+        <button id="resendOtpBtn" class="resend-link disabled" onclick="resendOtp()">
+          Resend OTP in <span id="resendTimer">54</span>s
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!--  MAIN HEADER -->
+<header class="ajio-header">
+  <div class="ajio-header-inner">
+
+    <!-- LOGO -->
+    <a href="/" class="ajio-logo">AJIO</a>
+
+    <!-- NAV -->
+    <nav class="ajio-nav">
+      <div class="nav-wrap">
+
+        <!-- ===================== MEN ===================== -->
+        <div class="nav-item mega-parent">
+          <span class="nav-link">MEN <i class="fa-solid fa-chevron-down nav-arrow"></i></span>
+
+          <div class="mega-menu">
+            <!-- Left side shop by -->
+            <div class="mega-side">
+              <div class="shopby">Shop By:</div>
+
+              <div class="mega-tabs">
+                <button class="mega-tab active" type="button" data-target="#menCats">CATEGORIES</button>
+                <button class="mega-tab" type="button" data-target="#menBrands">BRANDS</button>
+              </div>
+
+              <!-- Tabs content -->
+              <div class="mega-panels">
+                <!-- CATEGORIES -->
+                <div class="mega-panel active" id="menCats">
+                 <a class="side-item active" href="/men/clothing/shirts/">CLOTHING</a>
+                 <a class="side-item" href="/men/footware/sneakers/">FOOTWEAR</a>
+                  <a class="side-item" href="/men/accessories/watches/">ACCESSORIES</a>
+                  <a class="side-item" href="/men/clothing/ethnic_jacket/">WINTERWEAR</a>
+                </div>
+
+                <!-- BRANDS -->
+                <div class="mega-panel" id="menBrands">
+                  <a class="side-item active" href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?brand=nike">NIKE</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'shirts' %}?brand=adidas">ADIDAS</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'tshirts' %}?brand=puma">PUMA</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?brand=snitch">SNITCH</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'shirts' %}?brand=levis">LEVI'S</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?brand=allen_solly">ALLEN SOLLY</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'tshirts' %}?brand=shein">SHEIN</a>
+                  <a class="side-item" href="{% url 'category_products' 'men' 'clothing' 'jeans' %}?brand=raymond">RAYMOND</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right mega content -->
+            <div class="mega-content">
+              <div class="mega-cols">
+                <div class="mega-col">
+                  <h4>WESTERN WEAR</h4>
+                  <a href="/men/clothing/jeans/">Jeans</a>
+                  <a href="/men/clothing/shirts/">Shirts</a>
+                  <a href="/men/clothing/tshirts/">T-Shirts</a>
+                  <a href="/men/clothing/suit_sets/">Suit Sets</a>
+                
+                </div>
+
+                <div class="mega-col">
+                  <h4>ETHNIC WEAR</h4>
+                  <a href="/men/clothing/Kurtas/">Kurtas</a>
+                  <a href="/men/clothing/ethnic_jacket/">Ethnic Jackets</a>
+                  <a href="/men/clothing/sherwani/">Sherwanis</a>
+                  
+
+                </div>
+
+                <div class="mega-col">
+                  <h4>FOOTWEAR</h4>
+                  <a href="/men/footware/casual_shoes/">Casual Shoes</a>
+                  <a href="/men/footware/sports_shoes/">Sports Shoes</a>
+                  <a href="/men/footware/sneakers/">Sneakers</a>
+                  <a href="#">Sandals</a>
+                  <a href="#">Flip Flops</a>
+                  <a href="#">Formal Shoes</a>
+                </div>
+                  <div class="mega-col">
+                <h4 >ACCESSORIES</h4>
+                  <a href="#">Backpacks</a>
+                  <a href="#">Belts</a>
+                  <a href="#">Caps & Hats</a>
+                  <a href="/men/accessories/watches/">Watches</a>
+
+                
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== WOMEN ===================== -->
+        <div class="nav-item mega-parent">
+          <span class="nav-link">WOMEN <i class="fa-solid fa-chevron-down nav-arrow"></i></span>
+
+          <div class="mega-menu">
+            <div class="mega-side">
+              <div class="shopby">Shop By:</div>
+
+              <div class="mega-tabs">
+                <button class="mega-tab active" type="button" data-target="#womenCats">CATEGORIES</button>
+                <button class="mega-tab" type="button" data-target="#womenBrands">BRANDS</button>
+              </div>
+
+              <div class="mega-panels">
+                <div class="mega-panel active" id="womenCats">
+                  <a class="side-item active" href="/women/women_clothing/women_jeans/">CLOTHING</a>
+                  <a class="side-item" href="/women/women_footware/flats/">FOOTWEAR</a>
+                  <a class="side-item" href="/women/women_accessories/jewellery/">ACCESSORIES</a>
+                  <a class="side-item" href="#">ALL THAT'S NEW</a>
+                  <a class="side-item" href="#">WINTERWEAR</a>
+                </div>
+
+                <div class="mega-panel" id="womenBrands">
+                  <a class="side-item active" href="{% url 'category_products' 'women' 'women_clothing' 'women_kurtas' %}?brand=max">MAX</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'women_footware' 'flats' %}?brand=hm">H&M</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'women_clothing' 'tops' %}?brand=zara">ZARA</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'women_accessories' 'jewellery' %}?brand=kotty">KOTTY</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'women_clothing' 'women_kurtas' %}?brand=levis">LEVIS</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="mega-content">
+              <div class="mega-cols">
+                <div class="mega-col">
+                  <h4>WESTERN WEAR</h4>
+                  <a href="/women/women_clothing/tops/">Tops</a>
+                  <a href="/women/women_clothing/women_jeans/">Jeans</a>
+                  <a href="#">T-Shirts</a>
+                  <a href="#">Dresses</a>
+                  <a href="#">Jackets & Coats</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>ETHNIC WEAR</h4>
+                  <a href="/women/women_clothing/women_kurtas/">Kurtas</a>
+                  <a href="#">Suit Sets</a>
+                  <a href="#">Dupattas</a>
+                  <a href="#">Stoles</a>
+
+                  <h4 style="margin-top:18px;">ACCESSORIES</h4>
+                  <a href="#">Handbags</a>
+                  <a href="/women/women_accessories/jewellery/">Jewellery</a>
+                  <a href="#">Watches</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>FOOTWEAR</h4>
+                  <a href="/women/women_footware/flats">Flats</a>
+                  <a href="#">Heels</a>
+                  <a href="#">Casual Shoes</a>
+                  <a href="#">Sports Shoes</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>BEAUTY</h4>
+                  <a href="#">Makeup</a>
+                  <a href="#">Skin Care</a>
+                  <a href="#">Hair Care</a>
+                  <a href="#">Fragrances</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== KIDS ===================== -->
+        <div class="nav-item mega-parent">
+          <span class="nav-link">KIDS <i class="fa-solid fa-chevron-down nav-arrow"></i></span>
+
+          <div class="mega-menu">
+            <div class="mega-side">
+              <div class="shopby">Shop By:</div>
+
+              <div class="mega-tabs">
+                <button class="mega-tab active" type="button" data-target="#kidsCats">CATEGORIES</button>
+                <button class="mega-tab" type="button" data-target="#kidsBrands">BRANDS</button>
+              </div>
+
+              <div class="mega-panels">
+                <div class="mega-panel active" id="kidsCats">
+                  <a class="side-item active" href="/kids/boys/kid_shirts/">BOYS</a>
+                  <a class="side-item" href="/kids/girls/dresses/">GIRLS</a>
+                  <a class="side-item" href="#">FOOTWEAR</a>
+                  <a class="side-item" href="#">ACCESSORIES</a>
+                </div>
+
+                <div class="mega-panel" id="kidsBrands">
+                  <a class="side-item active" href="{% url 'category_products' 'kids' 'girls' 'dresses' %}?brand=playday">PLAYDAY</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'boys' 'kid_shirts' %}?brand=max">MAX</a>
+                  <a class="side-item" href="{% url 'category_products' 'women' 'boys' 'kid_shirts' %}?brand=zara">ZARA</a>
+                 
+                </div>
+              </div>
+            </div>
+
+            <div class="mega-content">
+              <div class="mega-cols">
+                <div class="mega-col">
+                  <h4>BOYS</h4>
+                  <a href="/kids/boys/kid_shirts/">Shirts</a>
+                  <a href="#">TShirts</a>
+                  <a href="#">Jeans</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>GIRLS</h4>
+                  <a href="/kids/girls/dresses/">Dresses</a>
+                  <a href="#">Tops</a>
+                  <a href="#">Leggings</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>FOOTWEAR</h4>
+                  <a href="#">Sports Shoes</a>
+                  <a href="#">Sandals</a>
+                  <a href="#">Flip Flops</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>ACCESSORIES</h4>
+                  <a href="#">Backpacks</a>
+                  <a href="#">Caps</a>
+                  <a href="#">Watches</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== BEAUTY ===================== -->
+        <div class="nav-item mega-parent">
+          <span class="nav-link">BEAUTY <i class="fa-solid fa-chevron-down nav-arrow"></i></span>
+
+          <div class="mega-menu">
+            <div class="mega-side">
+              <div class="shopby">Shop By:</div>
+
+              <div class="mega-tabs">
+                <button class="mega-tab active" type="button" data-target="#beautyCats">CATEGORIES</button>
+                <button class="mega-tab" type="button" data-target="#beautyBrands">BRANDS</button>
+              </div>
+
+              <div class="mega-panels">
+                <div class="mega-panel active" id="beautyCats">
+                  <a class="side-item active" href="/beauty/makeup/lipstick/">MAKEUP</a>
+                  <a class="side-item" href="#">SKIN CARE</a>
+                  <a class="side-item" href="#">HAIR CARE</a>
+                  <a class="side-item" href="#">FRAGRANCES</a>
+                </div>
+
+                <div class="mega-panel" id="beautyBrands">
+                  <a class="side-item active" href="{% url 'category_products' 'beauty' 'makeup' 'lipstick' %}?brand=mars">MARS</a>
+                  <a class="side-item" href="{% url 'category_products' 'beauty' 'makeup' 'lipstick' %}?brand=lakme">LAKME</a>
+                 
+                </div>
+              </div>
+            </div>
+
+            <div class="mega-content">
+              <div class="mega-cols">
+                <div class="mega-col">
+                  <h4>MAKEUP</h4>
+                  <a href="/beauty/makeup/lipstick/">Lipstick</a>
+                  <a href="#">Kajal</a>
+                  <a href="#">Foundation</a>
+                  <a href="#">Tools</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>SKIN CARE</h4>
+                  <a href="#">Face Wash</a>
+                  <a href="#">Moisturizer</a>
+                  <a href="#">Sunscreen</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>HAIR CARE</h4>
+                  <a href="#">Shampoo</a>
+                  <a href="#">Conditioner</a>
+                  <a href="#">Hair Oil</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>FRAGRANCES</h4>
+                  <a href="#">Perfumes</a>
+                  <a href="#">Body Mist</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== HOME & KITCHEN ===================== -->
+        <div class="nav-item mega-parent">
+          <span class="nav-link">HOME & KITCHEN <i class="fa-solid fa-chevron-down nav-arrow"></i></span>
+
+          <div class="mega-menu">
+            <div class="mega-side">
+              <div class="shopby">Shop By:</div>
+
+              <div class="mega-tabs">
+                <button class="mega-tab active" type="button" data-target="#homeCats">CATEGORIES</button>
+                <button class="mega-tab" type="button" data-target="#homeBrands">BRANDS</button>
+              </div>
+
+              <div class="mega-panels">
+                <div class="mega-panel active" id="homeCats">
+                  <a class="side-item active" href="/homekitchen/bed_linen/bedsheet/">BED LINEN</a>
+                  <a class="side-item" href="#">KITCHEN</a>
+                  <a class="side-item" href="#">HOME DECOR</a>
+                  <a class="side-item" href="#">DINING</a>
+                </div>
+
+                <div class="mega-panel" id="homeBrands">
+                  <a class="side-item active" href="{% url 'category_products' 'homekitchen' 'bed_linen' 'bedsheet' %}?brand=kotty">KOTTY</a>
+                  <a class="side-item" href="{% url 'category_products' 'homekitchen' 'bed_linen' 'bedsheet' %}?brand=shein">SHEIN</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="mega-content">
+              <div class="mega-cols">
+                <div class="mega-col">
+                  <h4>BED LINEN</h4>
+                  <a href="/homekitchen/bed_linen/bedsheet/">Bedsheets</a>
+                  <a href="#">Blankets</a>
+                  <a href="#">Pillows</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>KITCHEN</h4>
+                  <a href="#">Cookware</a>
+                  <a href="#">Cutlery</a>
+                  <a href="#">Storage</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>HOME DECOR</h4>
+                  <a href="#">Wall Decor</a>
+                  <a href="#">Clocks</a>
+                  <a href="#">Mirrors</a>
+                </div>
+
+                <div class="mega-col">
+                  <h4>DINING</h4>
+                  <a href="#">Serveware</a>
+                  <a href="#">Table Covers</a>
+                  <a href="#">Mugs</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </nav>
+
+    <!-- SEARCH -->
+    <div class="ajio-search" style="position:relative;">
+      <input type="text" id="searchInput" placeholder="Search AJIO" autocomplete="off">
+      <i class="fa fa-search" id="searchBtn"></i>
+      <div id="searchDropdown" class="search-dropdown" style="display:none;"></div>
+    </div>
+
+    <!-- ICONS -->
+    <div class="ajio-icons">
+      <a href="/wishlist/" class="icon-circle">
+        <i class="fa-regular fa-heart"></i>
+      </a>
+
+      <div class="cart-hover-wrap">
+        <a href="/cart/" class="icon-circle cart-icon">
+          <i class="fa fa-bag-shopping"></i>
+          <span id="cartCount" class="cart-badge">0</span>
+        </a>
+
+        <div id="cartDropdown" class="cart-dropdown">
+          <div class="cart-dd-title">Item(s) added to your bag</div>
+          <div id="headerCartItems" class="cart-dd-items"></div>
+          <div class="cart-dd-total">
+            <span>Total</span>
+            <strong id="headerCartTotal">Rs.0</strong>
+          </div>
+          <a href="/cart/" class="cart-dd-btn">PROCEED TO BAG</a>
+          <div class="cart-dd-footer">Free Shipping & Returns | 100% Handpicked | Assured Quality</div>
+        </div>
+      </div>
+    </div>
+    <div id="ajioToast" class="ajio-toast" style="display:none;"></div>
+
+
+  </div>
+</header>
+
+<!--TAB SWITCH SCRIPT (place BEFORE </body>) -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".mega-tabs").forEach((tabsWrap) => {
+      const tabs = tabsWrap.querySelectorAll(".mega-tab");
+      tabs.forEach((btn) => {
+        btn.addEventListener("mouseenter", () => {
+          // active button
+          tabs.forEach(t => t.classList.remove("active"));
+          btn.classList.add("active");
+
+          // active panel
+          const menu = btn.closest(".mega-menu");
+          if (!menu) return;
+
+          menu.querySelectorAll(".mega-panel").forEach(p => p.classList.remove("active"));
+          const target = menu.querySelector(btn.dataset.target);
+          if (target) target.classList.add("active");
+        });
+      });
+    });
+  });
+</script>
+    
+<!-- CART DROPDOWN (hover only) -->
+    <!-- <div id="cartDropdown" class="cart-dropdown">
+
+        <div id="headerCartItems">
+          
+        </div>
+
+        <div class="cart-total">
+            Total <span id="headerCartTotal">Rs.0</span>
+        </div>
+
+        <a href="/cart/" class="proceed-btn">PROCEED TO BAG</a>
+
+        <p class="cart-note">
+            Free Shipping & Returns | 100% Handpicked | Assured Quality
+        </p>
+
+    </div> -->
+
+
+    {% block quickview %}
+<div id="qvOverlay" class="qv-overlay" style="display:none;"></div>
+
+<div id="qvModal" class="qv-modal" style="display:none;">
+  <button class="qv-close" type="button" id="qvClose">✕</button>
+
+  <div class="qv-body">
+    <div class="qv-left">
+      <div class="qv-thumbs" id="qvThumbs"></div>
+      <div class="qv-main">
+        <img id="qvMainImg" src="{% static 'images/no-image.png' %}" alt="">
+      </div>
+    </div>
+
+    <div class="qv-right">
+      <div class="qv-brand" id="qvBrand"></div>
+      <div class="qv-title" id="qvName"></div>
+
+      <div class="qv-price">
+        <span class="qv-final" id="qvFinal"></span>
+        <span class="qv-mrp" id="qvMrp"></span>
+      </div>
+
+      <!--  COLOR SECTION -->
+      <div class="qv-color-section">
+        <div class="qv-color-label">
+          Color: <b id="qvColorName">-</b>
+          <a href="javascript:void(0)" id="qvMoreColors" style="display:none;">+ More</a>
+        </div>
+        <div class="qv-color-swatches" id="qvColorSwatches"></div>
+      </div>
+
+      <div class="qv-size-section">
+        <div class="qv-size-title">Select Size</div>
+        <div class="qv-sizes" id="qvSizes"></div>
+        <div class="qv-error" id="qvSizeError" style="display:none;">Please select a size</div>
+      </div>
+
+      <button type="button" class="qv-add" id="qvAddBtn">
+        <i class="fa fa-bag-shopping"></i> ADD TO BAG
+      </button>
+
+      <a href="#" class="qv-details" id="qvDetailsBtn">PRODUCT DETAILS</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+
+
+{% block content %}{% endblock %}
+
+<!-- FOOTER -->
+<footer class="ajio-footer">
+
+    <!-- TOP ICON STRIP -->
+    <div class="footer-icons">
+        <div class="icon-item">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <p>EASY EXCHANGE</p>
+        </div>
+        <div class="icon-item">
+            <i class="fa-regular fa-heart"></i>
+            <p>100% HANDPICKED</p>
+        </div>
+        <div class="icon-item">
+            <i class="fa-solid fa-award"></i>
+            <p>ASSURED QUALITY</p>
+        </div>
+    </div>
+
+    <!-- MAIN FOOTER -->
+    <div class="footer-content">
+
+        <div class="footer-col">
+            <h4>Ajio</h4>
+            <ul>
+                <li>Who We Are</li>
+                <li>Terms & Conditions</li>
+                <li>We Respect Your Privacy</li>
+                <li>Fees & Payments</li>
+                <li>Returns & Refunds Policy</li>
+                <li>Promotions Terms & Conditions</li>
+                <li>Blog</li>
+            </ul>
+        </div>
+
+        <div class="footer-col">
+            <h4>Help</h4>
+            <ul>
+                <li>Track Your Order</li>
+                <li>Frequently Asked Questions</li>
+                <li>Returns</li>
+                <li>Cancellations</li>
+                <li>Payments</li>
+                <li>Customer Care</li>
+                <li>How Do I Redeem My Coupon</li>
+            </ul>
+        </div>
+
+        <div class="footer-col">
+            <h4>Shop by</h4>
+            <ul>
+                <li>All</li>
+                <li>Men</li>
+                <li>Women</li>
+                <li>Kids</li>
+                <li>Indie</li>
+                <li>Stores</li>
+                <li>New Arrivals</li>
+                <li>Brand Directory</li>
+                <li>Home</li>
+                <li>Collections</li>
+            </ul>
+        </div>
+
+        <div class="footer-col">
+            <h4>Follow us</h4>
+            <ul>
+                <li>Facebook</li>
+                <li>Instagram - AJIOLife</li>
+                <li>Instagram - AJIOLUXE</li>
+                <li>Twitter</li>
+                <li>Pinterest</li>
+            </ul>
+        </div>
+
+    </div> 
+
+    <!-- BOTTOM STRIP -->
+     <div class="footer-bottom">
+        <div class="payment">
+            <span>Payment methods</span>
+            <img src="https://img.icons8.com/color/48/visa.png">
+            <img src="https://img.icons8.com/color/48/mastercard.png">
+            <img src="https://img.icons8.com/color/48/rupay.png">
+            <span class="cod">₹ CASH ON DELIVERY</span>
+            <span>JioMoney</span>
+        </div>
+
+        <div class="secure">
+            <span>Secure systems</span>
+            <span class="ssl">256 BIT SSL</span>
+        </div>
+    </div>
+
+</footer>
+<script>
+  window.QV_FALLBACK_IMG = "{% static 'images/no-image.png' %}";
+</script>
+<script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>
