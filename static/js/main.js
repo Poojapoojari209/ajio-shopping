@@ -12,16 +12,35 @@ const QV_FALLBACK_IMG = window.QV_FALLBACK_IMG || "/static/images/no-image.png";
 function decodeJwtPayload(token) {
   try {
     const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
+    if (!base64Url) return null;
+
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+
+    //  add padding
+    while (base64.length % 4 !== 0) {
+      base64 += "=";
+    }
+
+    const jsonPayload = atob(base64);
     return JSON.parse(jsonPayload);
-  } catch {
+  } catch (e) {
     return null;
+  }
+}
+
+async function isLoggedInServer() {
+  try {
+    const res = await fetch("/api/users/me/", { credentials: "include" });
+    if (!res.ok) return false;
+
+    const p = await res.json().catch(() => ({}));
+    if (p.first_name) localStorage.setItem("first_name", p.first_name);
+    if (p.screen_name) localStorage.setItem("screen_name", p.screen_name);
+    if (p.phone) localStorage.setItem("phone", p.phone);
+
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -647,6 +666,7 @@ document.addEventListener("input", async (e) => {
 
     // load profile & cache (ensures topbar correct)
     await syncProfileNameToLocalStorage(data.access);
+    updateTopbar();
 
     setStartShoppingEnabled(true);
   } catch (err) {
@@ -672,19 +692,26 @@ async function saveSetupProfile(accessToken, payload) {
 }
 
 async function syncProfileNameToLocalStorage(accessToken) {
+   const token = accessToken || localStorage.getItem("access");
+  if (!token) return false;
+
   try {
     const res = await fetch(API_PROFILE, {
-      headers: { "Authorization": "Bearer " + accessToken }
+      headers: { "Authorization": "Bearer " + token }
     });
 
-    if (!res.ok) return;
+    if (!res.ok) return false;
 
     const p = await res.json().catch(() => ({}));
 
     if (p.first_name) localStorage.setItem("first_name", p.first_name);
     if (p.screen_name) localStorage.setItem("screen_name", p.screen_name);
     if (p.phone) localStorage.setItem("phone", p.phone);
-  } catch (e) {}
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function startShopping() {
@@ -734,19 +761,14 @@ async function updateTopbar() {
   const topbar = document.querySelector(".topbar-right");
   if (!topbar) return;
 
-  const token = localStorage.getItem("access");
+  // If we have any access token, try loading profile with Bearer
+  const ok = await syncProfileNameToLocalStorage();
 
-  if (!isTokenValid(token)) {
-    clearAuth();
+  if (ok) {
+    renderLoggedInTopbar(topbar);
+  } else {
     renderGuestTopbar(topbar);
-    return;
   }
-
-  if (!localStorage.getItem("first_name") && !localStorage.getItem("screen_name")) {
-    await syncProfileNameToLocalStorage(token);
-  }
-
-  renderLoggedInTopbar(topbar);
 }
 
 function logout() {
@@ -1029,9 +1051,9 @@ function addToCartFromQuickView(productId, size) {
   const token = localStorage.getItem("access");
 
   if (!isTokenValid(token)) {
-    clearAuth();
-    updateTopbar();
-    alert("Please login first");
+    // clearAuth();
+    // updateTopbar();
+    // alert("Please login first");
     openLogin();
     return;
   }

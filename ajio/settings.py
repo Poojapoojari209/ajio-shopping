@@ -30,10 +30,12 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-local-dev-key")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
-ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
 
-CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in ALLOWED_HOSTS if h]
+CSRF_TRUSTED_ORIGINS = []
+for h in ALLOWED_HOSTS:
+    if h not in ("127.0.0.1", "localhost"):
+        CSRF_TRUSTED_ORIGINS += [f"http://{h}", f"https://{h}"]
 
 
 # Application definition
