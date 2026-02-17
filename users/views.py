@@ -235,7 +235,7 @@ def verify_otp(request):
     # NOTE: invite_code not stored in your model (you can add field if needed)
     profile.save()
 
-    # ✅ generate JWT
+    #  generate JWT
     refresh = RefreshToken.for_user(user)
     access = str(refresh.access_token)
 

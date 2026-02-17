@@ -38,8 +38,8 @@ urlpatterns = [
     path("wishlist/", views.wishlist_page, name="wishlist"),
     
     # AUTH PAGES 
-    path('login/', lambda request: render(request, 'login.html'), name="login"),
-    path('register/', lambda request: render(request, 'register.html'), name="register"),
+    # path('login/', lambda request: render(request, 'login.html'), name="login"),
+    # path('register/', lambda request: render(request, 'register.html'), name="register"),
 
     #  ORDER PAGES (MUST BE BEFORE products include)
     path("orders/confirm/<int:order_id>/", views.order_confirm_page, name="order_confirm"),
