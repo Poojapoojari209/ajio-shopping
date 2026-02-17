@@ -64,7 +64,7 @@ function renderWishCard(p) {
   const name = escHtml(p.name || "");
   const price = p.price ? `₹${escHtml(p.price)}` : "";
 
-  // store size if available (optional)
+  // store size if available
   const size = escHtml(p.size || "");
 
   return `

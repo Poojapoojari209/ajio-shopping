@@ -1194,7 +1194,7 @@ function setWishUI(saved) {
   }
 }
 
-/* ✅ AJIO style popup message */
+/*  AJIO style popup message */
 function showAjioToast(message) {
   const toast = document.getElementById("ajioToast");
   if (!toast) return;

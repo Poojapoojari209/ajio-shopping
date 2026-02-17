@@ -176,7 +176,7 @@ def verify_otp(request):
     mobile = (request.data.get("mobile") or "").strip()
     otp = (request.data.get("otp") or "").strip()
 
-    # ✅ optional fields (from signup step)
+    #  fields (from signup step)
     name = (request.data.get("name") or "").strip()
     email = (request.data.get("email") or "").strip()
     gender = (request.data.get("gender") or "").strip()   # "Female" / "Male"
@@ -200,7 +200,7 @@ def verify_otp(request):
 
     to_number = f"+91{mobile}"
 
-    # ✅ verify with Twilio Verify
+    #  verify with Twilio Verify
     client = twilio_client()
     check = client.verify.v2.services(service_sid).verification_checks.create(
         to=to_number,
@@ -210,17 +210,17 @@ def verify_otp(request):
     if check.status != "approved":
         return Response({"success": False, "message": "Invalid OTP"}, status=400)
 
-    # ✅ create user (username = mobile)
+    # create user (username = mobile)
     user, created = User.objects.get_or_create(username=mobile)
 
-    # ✅ save name/email only if provided (AJIO setup step)
+    #  save name/email only if provided (AJIO setup step)
     if name:
         user.first_name = name
     if email:
         user.email = email
     user.save()
 
-    # ✅ create/update profile once
+    # create/update profile once
     profile, _ = UserProfile.objects.get_or_create(user=user)
     profile.phone = mobile
 

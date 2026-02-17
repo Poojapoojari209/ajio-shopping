@@ -100,7 +100,7 @@ def clean_size(val, max_len=10):
     return s[:max_len]
 
 
-# ✅ VALID SIZE CODES (must match your ProductSize.SIZE_CHOICES keys)
+#  VALID SIZE CODES (must match your ProductSize.SIZE_CHOICES keys)
 VALID_SIZES = {
     "XS", "S", "M", "L", "XL", "XXL",
     "28", "30", "32", "34", "36",
@@ -195,7 +195,7 @@ def calculate_order_breakup(cart_items):
 # -------------------------
 
 def checkout_page(request):
-    # ✅ DO NOT redirect to /login/
+    #  DO NOT redirect to /login/
     # Page will load, JS will open OTP modal if not logged in
     addresses = []
     user = get_jwt_user_from_cookie(request)

@@ -136,7 +136,7 @@ async function loadAjioOrderDetail(){
   const orderNo = order.order_no || ("FN" + String(order.id).padStart(10, "0"));
   const createdAt = order.created_at || new Date().toISOString();
 
-  // ✅ IMPORTANT: backend should send these
+  // backend should send these
   const estimatedDelivery = order.estimated_delivery || null; // YYYY-MM-DD
   const deliveredOn = order.delivered_on || null;            // YYYY-MM-DD (or null)
 
@@ -173,7 +173,7 @@ async function loadAjioOrderDetail(){
         `;
     }
 
-    // ✅ show ONLY one date line depending on status
+    // show ONLY one date line depending on status
     let dateLine = "";
     if ((st === "CONFIRMED" || st === "PENDING") && estimatedDelivery) {
       dateLine = `<div class="ajio-od-est">Estimated Delivery : <b>${formatDateShort(estimatedDelivery)}</b></div>`;

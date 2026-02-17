@@ -264,7 +264,7 @@ window.changeQty = function (cartItemId, delta) {
 
   let newQty = currentQty + delta;
 
-  // ✅ If qty becomes 0 → remove item
+  //  If qty becomes 0 → remove item
   if (newQty === 0) {
     fetch(`/api/cart/remove/${cartItemId}/`, {
       method: "DELETE",
