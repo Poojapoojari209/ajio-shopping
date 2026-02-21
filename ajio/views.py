@@ -60,15 +60,11 @@ def address_book(request):
         return redirect("/")
     return render(request, "account/address_book.html", {"active": "address_book"})
 
-<<<<<<< HEAD
-
 def payments(request):
     user = get_jwt_user_from_cookie(request)
     if not user:
         return redirect("/")
     return render(request, "account/payments.html", {"active": "payments"})
-=======
->>>>>>> ce242fc (Fix account auth (JWT), update docker config)
 
 def payments(request):
     user = get_jwt_user_from_cookie(request)
@@ -174,11 +170,9 @@ def order_success_page(request, order_id):
         return redirect("/")
 
     order = get_object_or_404(Order, id=order_id, user=user)
-<<<<<<< HEAD
 
     return render(request, "orders/success.html", {
         "order": order
     })
-=======
+
     return render(request, "orders/success.html", {"order": order})
->>>>>>> ce242fc (Fix account auth (JWT), update docker config)
