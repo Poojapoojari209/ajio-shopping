@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.0
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -18,7 +18,7 @@ services:
 
   web:
     build: .
-    restart: unless-stopped
+    restart: always
     command: gunicorn ajio.wsgi:application --bind 0.0.0.0:8000 --workers 1 --timeout 180 --access-logfile - --error-logfile -
     ports:
       - "8000:8000"
@@ -28,6 +28,7 @@ services:
       - db
     volumes:
       - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
     networks:
       - ajio_net
 
