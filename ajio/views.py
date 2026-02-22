@@ -25,9 +25,6 @@ def wishlist_page(request):
     return render(request, "wishlist.html")
 
 
-# =========================
-# ACCOUNT PAGES (JWT PROTECTED)
-# =========================
 
 def orders(request):
     user = get_jwt_user_from_cookie(request)
@@ -63,13 +60,17 @@ def address_book(request):
         return redirect("/")
     return render(request, "account/address_book.html", {"active": "address_book"})
 
-
 def payments(request):
     user = get_jwt_user_from_cookie(request)
     if not user:
         return redirect("/")
     return render(request, "account/payments.html", {"active": "payments"})
 
+def payments(request):
+    user = get_jwt_user_from_cookie(request)
+    if not user:
+        return redirect("/")
+    return render(request, "account/payments.html", {"active": "payments"})
 
 # =========================
 # ORDER DETAIL PAGE
@@ -173,3 +174,5 @@ def order_success_page(request, order_id):
     return render(request, "orders/success.html", {
         "order": order
     })
+
+    return render(request, "orders/success.html", {"order": order})
